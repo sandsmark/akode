@@ -19,6 +19,7 @@
 */
 
 #include <pthread.h>
+#include <semaphore.h>
 #include <iostream>
 
 #include "audioframe.h"
@@ -55,6 +56,7 @@ struct Player::private_data
                    , sample_rate(0)
                    , state(Closed)
                    , halt(false)
+                   , pause(false)
                    , running(false)
                    {};
 
@@ -79,8 +81,10 @@ struct Player::private_data
     State state;
 
     volatile bool halt;
+    volatile bool pause;
     bool running;
     pthread_t player_thread;
+    sem_t pause_sem;
 
     void setState(Player::State s) {
         state = s;
@@ -100,6 +104,9 @@ static void* run_player(void* arg) {
     m_data->halt = false;
 
     while(true) {
+        if (m_data->halt) break;
+        if (m_data->pause) sem_wait(&m_data->pause_sem);
+
         no_error = m_data->in_decoder->readFrame(&frame);
 
         if (!no_error) {
@@ -133,7 +140,6 @@ static void* run_player(void* arg) {
                 goto error;
             }
         }
-        if (m_data->halt) break;
     }
 
     m_data->decoder->halt();
@@ -157,10 +163,12 @@ eof:
 
 Player::Player() {
     m_data = new private_data;
+    sem_init(&m_data->pause_sem,0,0);
 }
 
 Player::~Player() {
     close();
+    sem_destroy(&m_data->pause_sem);
     delete m_data;
 }
 
@@ -322,13 +330,7 @@ void Player::unload() {
 
 void Player::play() {
     if (state() == Closed || state() == Open) return;
-    if (state() == Playing) return;
-
-    if (state() == Paused) {
-        if (m_data->buffer) m_data->buffer->resume();
-        setState(Playing);
-        return;
-    }
+    if (state() == Playing || state() == Paused) return;
 
     if (!m_data->buffer) { // stop() has been called
         m_data->buffer = new AudioBuffer(16);
@@ -381,9 +383,20 @@ void Player::pause() {
     if (state() == Closed || state() == Open || state() == Loaded) return;
     if (state() == Paused) return;
 
-    m_data->buffer->pause();
+    //m_data->buffer->pause();
+    m_data->pause = true;
     setState(Paused);
 }
+
+void Player::resume() {
+    if (state() != Paused) return;
+
+    m_data->pause = false;
+    sem_post(&m_data->pause_sem);
+
+    setState(Playing);
+}
+
 
 void Player::setVolume(float f) {
     if (state() == Closed) return;
