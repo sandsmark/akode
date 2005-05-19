@@ -361,6 +361,7 @@ void Player::play() {
 void Player::stop() {
     if (state() == Closed || state() == Open) return;
     if (state() == Loaded) return;
+    if (state() == Paused) resume();
 
     if (m_data->running) {
         m_data->halt = true;
