@@ -20,7 +20,6 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include <iostream>
 
 #include "audioframe.h"
 #include "audiobuffer.h"
@@ -38,6 +37,11 @@
 #include "magic.h"
 
 #include "player.h"
+
+#ifndef NDEBUG
+#include <iostream>
+#define AKODE_DEBUG(x) {std::cerr << "akode: " << x << "\n";}
+#endif
 
 namespace aKode {
 
@@ -104,19 +108,19 @@ static void* run_player(void* arg) {
     m_data->halt = false;
 
     while(true) {
-        if (m_data->halt) break;
         if (m_data->pause) sem_wait(&m_data->pause_sem);
+        if (m_data->halt) break;
 
         no_error = m_data->in_decoder->readFrame(&frame);
 
         if (!no_error) {
-            if (m_data->in_decoder->error())
-                goto error;
-            else
             if (m_data->in_decoder->eof())
                 goto eof;
             else
-                std::cerr << "Blip?\n";
+            if (m_data->in_decoder->error())
+                goto error;
+            else
+                AKODE_DEBUG("Blip?");
         }
         else {
             AudioFrame* out_frame = &frame;
@@ -178,12 +182,12 @@ bool Player::open(string sinkname) {
 
     m_data->sink_handler.load(sinkname);
     if (!m_data->sink_handler.isLoaded()) {
-        std::cerr << "Could not load " << sinkname << "-sink\n";
+        AKODE_DEBUG("Could not load " << sinkname << "-sink");
         return false;
     }
     m_data->sink = m_data->sink_handler.openSink();
     if (!m_data->sink->open()) {
-        std::cerr << "Could not open " << sinkname << "-sink\n";
+        AKODE_DEBUG("Could not open " << sinkname << "-sink");
         return false;
     }
     setState(Open);
@@ -218,16 +222,16 @@ bool Player::load(string filename) {
 
     string format = Magic::detectFile(m_data->src);
     if (!format.empty())
-    	std::cerr << "Guessed format: " << format << "\n";
+    	AKODE_DEBUG("Guessed format: " << format)
     else {
-    	std::cerr << "Cannot detect mimetype\n";
+    	AKODE_DEBUG("akode: Cannot detect mimetype");
         delete m_data->src;
         m_data->src = 0;
         return false;
     }
 
     if (!m_data->decoder_handler.load(format)) {
-    	std::cerr << "Could not load " << format << "-decoder\n";
+    	AKODE_DEBUG("akode: Could not load " << format << "-decoder");
         delete m_data->src;
         m_data->src = 0;
         return false;
@@ -235,7 +239,7 @@ bool Player::load(string filename) {
 
     m_data->frame_decoder = m_data->decoder_handler.openFrameDecoder(m_data->src);
     if (!m_data->frame_decoder) {
-        std::cerr << "Failed to open FrameDecoder\n";
+        AKODE_DEBUG("Failed to open FrameDecoder");
         m_data->decoder_handler.unload();
         delete m_data->src;
         m_data->src = 0;
@@ -245,7 +249,7 @@ bool Player::load(string filename) {
     AudioFrame first_frame;
 
     if (!m_data->frame_decoder->readFrame(&first_frame)) {
-        std::cerr << "Failed to decode first frame\n";
+        AKODE_DEBUG("Failed to decode first frame");
         delete m_data->frame_decoder;
         m_data->frame_decoder = 0;
         m_data->decoder_handler.unload();
@@ -256,7 +260,7 @@ bool Player::load(string filename) {
 
     int state = m_data->sink->setAudioConfiguration(&first_frame);
     if (state < 0) {
-        std::cerr << "The sink could not be configured for this format\n";
+        AKODE_DEBUG("The sink could not be configured for this format");
         delete m_data->frame_decoder;
         m_data->frame_decoder = 0;
         m_data->decoder_handler.unload();
@@ -279,7 +283,7 @@ bool Player::load(string filename) {
         int in_channels = first_frame.channels;
         if (in_channels != out_channels) {
             // ### We don't do mixing yet
-            std::cerr << "Sample has wrong number of channels\n";
+            AKODE_DEBUG("Sample has wrong number of channels");
             delete m_data->frame_decoder;
             m_data->frame_decoder = 0;
             m_data->decoder_handler.unload();
@@ -330,7 +334,11 @@ void Player::unload() {
 
 void Player::play() {
     if (state() == Closed || state() == Open) return;
-    if (state() == Playing || state() == Paused) return;
+    if (state() == Playing) return;
+
+    if (state() == Paused) {
+        return resume();
+    }
 
     if (!m_data->buffer) { // stop() has been called
         m_data->buffer = new AudioBuffer(16);
@@ -361,10 +369,12 @@ void Player::play() {
 void Player::stop() {
     if (state() == Closed || state() == Open) return;
     if (state() == Loaded) return;
+
+    // Needs to set halt first to avoid the paused thread to play a soundbite
+    m_data->halt = true;
     if (state() == Paused) resume();
 
     if (m_data->running) {
-        m_data->halt = true;
         pthread_join(m_data->player_thread, 0);
         m_data->running = false;
     }

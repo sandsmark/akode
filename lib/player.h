@@ -42,6 +42,7 @@ public:
 
     /*!
      * Opens a player that outputs to the sink \a sinkname (the "auto"-sink is recommended).
+     * Returns false if the device cannot be opened.
      */
     bool open(string sinkname);
     /*!
@@ -52,6 +53,7 @@ public:
 
     /*!
      * Load the file \a filename and prepare for playing.
+     * Return false if the file cannot be loaded or decoded.
      */
     bool load(string filename);
     /*!
@@ -76,7 +78,7 @@ public:
      */
     void stop();
 
-    /*!
+    /* Not implemented!
      * Prepare to crossfade current file, it can now be safely unloaded and a new file loaded.
      * The crossfade will last for up to \a ms milliseconds.
      */

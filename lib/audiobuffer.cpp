@@ -1,6 +1,6 @@
 /*  aKode AudioBuffer
 
-    Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
+    Copyright (C) 2004-2005 Allan Sandfeld Jensen <kde@carewolf.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -25,13 +25,13 @@
 
 namespace aKode {
 
-AudioBuffer::AudioBuffer(unsigned int len) : length(len), readPos(0), writePos(0)
+AudioBuffer::AudioBuffer(unsigned int len) : length(len), readPos(0), writePos(0),
+    flushed(false), released(false), paused(false), m_eof(false)
 {
     pthread_cond_init(&not_empty, 0);
     pthread_cond_init(&not_full, 0);
     pthread_mutex_init(&mutex, 0);
     buffer = new AudioFrame[len];
-    flushed = released = paused = false;
 }
 
 AudioBuffer::~AudioBuffer() {
@@ -66,9 +66,9 @@ bool AudioBuffer::get(AudioFrame* buf, bool blocking) {
     pthread_mutex_lock(&mutex);
     if (released) goto fail;
     if (readPos == writePos || paused) {
-        if (blocking) {
+        if (blocking && !m_eof) {
             pthread_cond_wait(&not_empty, &mutex);
-            if (released) goto fail;
+            if (m_eof || released) goto fail;
         }
         else
             goto fail;
@@ -91,6 +91,23 @@ bool AudioBuffer::empty() {
 
 bool AudioBuffer::full() {
     return (readPos == (writePos+1) % length);
+}
+
+void AudioBuffer::setEOF() {
+    pthread_mutex_lock(&mutex);
+    m_eof = true;
+    pthread_cond_signal(&not_empty);
+    pthread_mutex_unlock(&mutex);
+}
+
+bool AudioBuffer::eof() {
+    return m_eof && empty();
+}
+
+void AudioBuffer::reset() {
+    // We assume all processes have been released at this point
+    readPos = writePos = 0;
+    flushed = released = paused = m_eof = false;
 }
 
 void AudioBuffer::flush() {

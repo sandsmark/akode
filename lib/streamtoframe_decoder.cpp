@@ -104,7 +104,7 @@ long StreamToFrameDecoder::position() {
 }
 
 bool StreamToFrameDecoder::eof() {
-    return m_data->halted || (m_data->inDecoder->eof() && m_data->buffer->empty());
+    return m_data->halted || m_data->buffer->eof();
 }
 
 bool StreamToFrameDecoder::error() {
