@@ -363,6 +363,7 @@ void Player::play() {
         m_data->in_decoder = 0;
         m_data->decoder    = 0;
         m_data->buffer     = 0;
+        setState(Loaded);
     }
 }
 
@@ -375,6 +376,7 @@ void Player::stop() {
     if (state() == Paused) resume();
 
     if (m_data->running) {
+        m_data->buffer->release();
         pthread_join(m_data->player_thread, 0);
         m_data->running = false;
     }
