@@ -41,6 +41,8 @@
 #ifndef NDEBUG
 #include <iostream>
 #define AKODE_DEBUG(x) {std::cerr << "akode: " << x << "\n";}
+#else
+#define AKODE_DEBUG(x) { }
 #endif
 
 namespace aKode {
