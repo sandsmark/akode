@@ -72,7 +72,7 @@ extern "C" { VorbisDecoderPlugin vorbis_decoder; }
 
 struct VorbisDecoder::private_data
 {
-    private_data() : bitstream(0), eof(false), error(false), initialized(false), big_endian(0), retries(0) {};
+  private_data() : bitstream(0), eof(false), error(false), initialized(false), retries(0), big_endian(0) {};
     OggVorbis_File *vf;
     vorbis_comment *vc;
     vorbis_info *vi;
