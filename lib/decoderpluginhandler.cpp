@@ -47,9 +47,10 @@ bool DecoderPluginHandler::load(const string name)
     if (res)
         decoder_plugin = (DecoderPlugin*)loadPlugin(name+"_decoder");
     else
-        if (name == "wav")
+        if (name == "wav") {
             decoder_plugin = &wav_decoder;
-        else
+            res = true;
+        } else
             return false;
 
     if (!res)
