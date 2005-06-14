@@ -113,6 +113,8 @@ static void* run_player(void* arg) {
         if (m_data->pause) sem_wait(&m_data->pause_sem);
         if (m_data->halt) break;
 
+        if ( m_data->decoder->eof() ) m_data->in_decoder->setBlocking( false );
+
         no_error = m_data->in_decoder->readFrame(&frame);
 
         if (!no_error) {
