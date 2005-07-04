@@ -31,7 +31,7 @@ namespace aKode {
 //! A reentrant circular buffer of AudioFrames
 
 /*!
- * A buffer of AudioFrame to synchronize audio between two threads, one reading and one getting.
+ * A buffer of AudioFrame to synchronize audio between two threads, one putting and one getting.
  */
 class KDE_EXPORT AudioBuffer {
     const unsigned int length;
@@ -73,6 +73,11 @@ public:
      * \note That get will fail even if blocking is set if release is called.
      */
     bool get(AudioFrame* buf, bool blocking = false);
+
+    /*!
+     * Returns the position of the next audioFrame in the buffer
+     */
+    long position();
 
     /*!
      * Returns true if the buffer is empty.

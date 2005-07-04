@@ -58,12 +58,14 @@ ALSASink::~ALSASink()
 bool ALSASink::open()
 {
     int err = 0;
-    err = snd_pcm_open(&m_data->pcm_playback, "default", SND_PCM_STREAM_PLAYBACK, 0);
+    // open is non-blocking to make it possible to fail when occupied
+    err = snd_pcm_open(&m_data->pcm_playback, "default", SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
     if (err < 0) {
         m_data->error = true;
         return false;
     }
 
+    // Set to blocking
     snd_pcm_nonblock(m_data->pcm_playback, 0);
 
     m_data->error = false;

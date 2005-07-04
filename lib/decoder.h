@@ -52,6 +52,10 @@ public:
      */
     virtual bool seek(long pos) = 0;
     /*!
+     * Returns true if the decoder is seekable
+     */
+    virtual bool seekable() = 0;
+    /*!
      * Returns true if the decoder has reached the end-of-file/stream
      */
     virtual bool eof() = 0;

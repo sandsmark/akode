@@ -257,6 +257,10 @@ bool VorbisDecoder::error() {
     return m_data->error;
 }
 
+bool VorbisDecoder::seekable() {
+    return m_data->src->seekable();
+}
+
 bool VorbisDecoder::seek(long pos) {
     if (!m_data->initialized) return false;
     int r = ov_time_seek(m_data->vf, pos/1000.0);

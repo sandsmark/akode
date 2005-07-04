@@ -528,6 +528,10 @@ bool MPEGDecoder::error() {
     return m_data->error;
 }
 
+bool MPEGDecoder::seekable() {
+    return m_data->src->seekable();
+}
+
 bool MPEGDecoder::seek(long pos) {
     if (!m_data->initialized) return false;
     bool res = false;

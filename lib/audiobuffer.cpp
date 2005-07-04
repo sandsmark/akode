@@ -68,7 +68,8 @@ bool AudioBuffer::get(AudioFrame* buf, bool blocking) {
     if (readPos == writePos || paused) {
         if (blocking && !m_eof) {
             pthread_cond_wait(&not_empty, &mutex);
-            if (m_eof || released) goto fail;
+            if (released) goto fail;
+            if (empty()) goto fail;
         }
         else
             goto fail;
@@ -83,6 +84,15 @@ bool AudioBuffer::get(AudioFrame* buf, bool blocking) {
 fail:
     pthread_mutex_unlock(&mutex);
     return false;
+}
+
+long AudioBuffer::position() {
+    long out = -1;
+    pthread_mutex_lock(&mutex);
+    if (!empty() && !released)
+        out = buffer[readPos].pos;
+    pthread_mutex_unlock(&mutex);
+    return out;
 }
 
 bool AudioBuffer::empty() {

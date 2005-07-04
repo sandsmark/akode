@@ -1,6 +1,6 @@
-/*  aKode: Stream-to-Frame Decoder
+/*  aKode: Buffered Decoder
 
-    Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
+    Copyright (C) 2005 Allan Sandfeld Jensen <kde@carewolf.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -18,38 +18,57 @@
     Boston, MA 02111-1307, USA.
 */
 
-#ifndef _AKODE_STREAMTOFRAME_DECODER_H
-#define _AKODE_STREAMTOFRAME_DECODER_H
+#ifndef _AKODE_BUFFERED_DECODER_H
+#define _AKODE_BUFFERED_DECODER_H
 
 #include "framedecoder.h"
 #include <kdelibs_export.h>
+
 namespace aKode {
 
 class AudioBuffer;
-class StreamDecoder;
 class AudioConfiguration;
 
-class KDE_EXPORT StreamToFrameDecoder : public FrameDecoder {
+class KDE_EXPORT BufferedDecoder : public FrameDecoder {
 public:
-    StreamToFrameDecoder(StreamDecoder*, AudioBuffer*);
-    virtual ~StreamToFrameDecoder();
+    BufferedDecoder();
+    virtual ~BufferedDecoder();
+
+    void openDecoder(FrameDecoder*);
+    void closeDecoder();
+
+    void start();
+    void stop();
+
+    void pause();
+    void resume();
+
     virtual bool readFrame(AudioFrame*);
-    virtual long length();
-    virtual long position();
-    virtual bool eof();
-    virtual bool error();
     virtual bool seek(long pos);
 
-    virtual void stop();
-    virtual void resume();
+    virtual long length();
+    virtual long position();
+    virtual bool seekable();
 
-    void setBlocking(bool block);
+    virtual bool eof();
+    virtual bool error();
+
+    void setBlockingRead(bool block);
+
+    void setBufferSize(int size);
+    void setFadingTime(int time);
+
+//     void setFadeInSeek(bool fade);
+//     void setFadeToStop(bool fade);
+
+    AudioBuffer* buffer() const;
 
     virtual const AudioConfiguration* audioConfiguration();
 
     struct private_data;
 private:
-    private_data *m_data;
+    private_data *d;
+
 protected:
     void fillFader();
 };
