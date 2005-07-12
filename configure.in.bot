@@ -1,0 +1,50 @@
+if test "x$have_libFLAC" = "xno"; then
+        echo ">"
+        echo "> You do not seem to have a recent enough libFLAC"
+        echo "> installed. Without it aKode and aRts"
+        echo "> will not be able to play FLAC files."
+        echo "> You need atleast libFLAC 1.0.3 or newer."
+        echo ">"
+fi
+
+if test "x$have_libOggFLAC" = "xno"; then
+        echo ">"
+        echo "> You do not seem to have libOggFLAC installed."
+        echo "> Without it aKode and aRts will not be"
+        echo "> able to play Ogg-files with embedded FLAC streams"
+        echo "> You need atleast libOggFLAC 1.1.1 or newer."
+        echo ">"
+fi
+
+if test "x$have_libSPEEX" = "xno"; then
+        echo ">"
+        echo "> You do not seem to have libspeex installed."
+        echo "> Without it aKode and aRts will not be"
+        echo "> able to play speex-files and -stream."
+        echo ">"
+fi
+
+if test "x$have_oggvorbis" = "xno"; then
+        echo ">"
+        echo "> You do not seem to have libvorbisfile installed."
+        echo "> Without it aKode will not be able to play"
+        echo "> Ogg-files with embedded Vorbis streams"
+        echo "> You need atleast libvorbisfile 1.0 or newer."
+        echo ">"
+fi
+
+if test "x$have_libMAD" = "xno"; then
+        echo ">"
+        echo "> You do not seem to have MADlib installed."
+        echo "> Without it aKode will not be able to play"
+        echo "> MPEG-audio this includes the common MP3 format"
+        echo ">"
+fi
+
+#if test "x$have_libltdl" = "xno"; then
+#        echo ">"
+#        echo "> You do not seem to have libltdl installed."
+#        echo "> Without it aKode will not work on some platforms."
+#        echo "> Recent Linux, BSDs and Solaris will still work"
+#        echo ">"
+#fi

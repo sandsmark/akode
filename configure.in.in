@@ -1,0 +1,301 @@
+AM_CONDITIONAL(install_akode_artsplugin, test x$build_arts = xyes)
+
+AC_DEFUN([AC_CHECK_LIBFLAC],
+[
+  AC_LANG_SAVE
+  AC_LANG_C
+  have_libFLAC=no
+  KDE_CHECK_HEADER(FLAC/metadata.h,
+  [
+     KDE_CHECK_LIB(FLAC,FLAC__seekable_stream_decoder_process_single,
+	          have_libFLAC=yes)
+
+    ])
+  if test "x$have_libFLAC" = "xyes"; then
+      LIBFLAC="-lFLAC"
+      AC_DEFINE(HAVE_LIBFLAC, 1,
+        [Define if you have libFLAC (required for loading FLAC files)])
+  fi
+  AC_SUBST(LIBFLAC)
+  AC_LANG_RESTORE
+])
+
+AC_DEFUN([AC_CHECK_LIBOGGFLAC],
+[
+  AC_LANG_SAVE
+  AC_LANG_C
+  have_libOggFLAC=no
+  KDE_CHECK_HEADER(OggFLAC/seekable_stream_decoder.h,
+  [
+     KDE_CHECK_LIB(OggFLAC,OggFLAC__seekable_stream_decoder_process_single,
+	          have_libOggFLAC=yes,,[-lm -lOggFLAC -lFLAC])
+
+    ])
+  if test "x$have_libOggFLAC" = "xyes"; then
+      LIBOGGFLAC="-lOggFLAC"
+      AC_DEFINE(HAVE_LIBOGGFLAC, 1,
+        [Define if you have libOggFLAC (required for loading OggFLAC files)])
+  fi
+  AC_SUBST(LIBOGGFLAC)
+  AC_LANG_RESTORE
+])
+
+AC_ARG_WITH(flac,AC_HELP_STRING([--with-flac],[Enable FLAC support [default=check]]),[flac_test="$withval"],[flac_test="yes"])
+
+if test "x$flac_test" = "xyes" ; then
+  AC_CHECK_LIBFLAC
+  AC_CHECK_LIBOGGFLAC
+fi
+
+AC_ARG_WITH(speex,AC_HELP_STRING([--with-speex],[Enable speex support [default=check]]),[speex_test="$withval"],[speex_test="yes"])
+
+if test "x$speex_test" = "xyes" ; then
+AC_MSG_CHECKING(for speex headers)
+have_libspeex=no
+kde_save_akode_cflags="$CFLAGS"
+kde_save_akode_libs="$LIBS"
+LIBS="$all_libraries $USER_LDFLAGS"
+CFLAGS="$CFLAGS $all_includes $USER_INCLUDES"
+AC_TRY_COMPILE([
+                #include <speex.h>
+                #include <speex_callbacks.h>
+                #include <ogg/ogg.h>
+                ],[
+                ],[
+                have_libspeex=yes
+                ])
+AC_MSG_RESULT($have_libspeex)
+if test x$have_libspeex = xyes; then
+   KDE_CHECK_LIB(speex,speex_decoder_ctl,,
+                have_libspeex=no,[-lspeex -logg])
+fi
+CFLAGS="$kde_save_akode_cflags"
+LIBS="$kde_save_akode_libs"
+AC_MSG_CHECKING(for speex11 headers)
+have_libspeex11=no
+kde_save_akode_cflags="$CFLAGS"
+kde_save_akode_libs="$LIBS"
+LIBS="$all_libraries $USER_LDFLAGS"
+CFLAGS="$CFLAGS $all_includes $USER_INCLUDES"
+AC_TRY_COMPILE([
+                #include <speex.h>
+                #include <speex_callbacks.h>
+                #include <speex_echo.h>
+                #include <speex_preprocess.h>
+                #include <ogg/ogg.h>
+                ],[
+                ],[
+                have_libspeex11=yes
+                ])
+AC_MSG_RESULT($have_libspeex11)
+if test x$have_libspeex11 = xyes; then
+   KDE_CHECK_LIB(speex,speex_decode_int,,
+                broken_libspeex11=yes,[-lspeex -logg])
+fi
+
+if test x$have_libspeex = xyes; then
+   AC_DEFINE(HAVE_SPEEX,1,[Define if you have speex installed])
+   SPEEXLIBS="-lspeex -logg"
+fi
+CFLAGS="$kde_save_akode_cflags"
+LIBS="$kde_save_akode_libs"
+AC_SUBST(SPEEXLIBS)
+
+if test x$have_libspeex11 = xyes; then
+   AC_DEFINE(HAVE_SPEEX11,1,[Define if you have libspeex 1.1.x installed])
+   if test x$broken_libspeex11 = xyes; then
+       AC_DEFINE(BROKEN_SPEEX11,1,[Define if you have one of the broken libspeex 1.1.x < 1.1.5])
+   fi
+fi
+fi
+
+AC_ARG_WITH(libmad,AC_HELP_STRING([--with-libmad],[Enable libmad support [default=check]]),[libmad_test="$withval"],[libmad_test="yes"])
+
+if test "x$libmad_test" = "xyes" ; then
+AC_MSG_CHECKING(for MADlib header)
+have_libMAD=no
+kde_save_akode_cflags="$CFLAGS"
+kde_save_akode_libs="$LIBS"
+LIBS="$all_libraries $USER_LDFLAGS"
+CFLAGS="$CFLAGS $all_includes $USER_INCLUDES"
+AC_TRY_COMPILE([
+                #include <mad.h>
+                ],[
+                ],[
+                have_libMAD=yes
+                ])
+AC_MSG_RESULT($have_libMAD)
+if test x$have_libMAD = xyes; then
+   KDE_CHECK_LIB(mad,mad_decoder_run,MAD_lib=yes,
+                have_libMAD=no,[-lmad])
+fi
+if test x$have_libMAD = xyes; then
+   AC_DEFINE(HAVE_MAD,1,[Define if you have MADlib installed])
+   MADLIBS="-lmad"
+fi
+CFLAGS="$kde_save_akode_cflags"
+LIBS="$kde_save_akode_libs"
+AC_SUBST(MADLIBS)
+fi
+
+AC_ARG_WITH(libsamplerate,AC_HELP_STRING([--with-libsamplerate],[Enable libsamplerate support [default=check]]),[libsamplerate_test="$withval"],[libsamplerate_test="yes"])
+
+if test "x$libsamplerate_test" = "xyes" ; then
+LIBSAMPLERATE=""
+KDE_CHECK_HEADERS(samplerate.h, [
+        KDE_CHECK_LIB(samplerate, src_simple, [
+                have_libsamplerate=yes
+                LIBSAMPLERATE="-lsamplerate"
+                AC_DEFINE(HAVE_LIBSAMPLERATE,1,[defined if you have libsamplerate library and header])
+        ])
+])
+AC_SUBST(LIBSAMPLERATE)
+fi
+
+dnl Check for pkg-config
+AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
+AC_ARG_WITH(jack,AC_HELP_STRING([--with-jack],[Enable Jack Audio Connection Kit support [default=check]]),[jack_test="$withval"],[jack_test="yes"])
+
+if test "x$jack_test" = "xyes" ; then
+AC_MSG_CHECKING(for Jack Audio Connection Kit)
+if $PKG_CONFIG --atleast-version 0.90 jack >/dev/null 2>&1 ; then
+  JACK_CFLAGS="`$PKG_CONFIG --cflags jack`"
+  JACK_LIBADD="`$PKG_CONFIG --libs-only-l jack`"
+  JACK_LDFLAGS="`$PKG_CONFIG --libs-only-L jack`"
+  have_jack=yes
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(HAVE_LIBJACK, 1,
+        [Define if you have libjack (required if you want Jack support)])
+else
+  AC_MSG_RESULT(not installed)
+fi
+AC_SUBST(JACK_CFLAGS)
+AC_SUBST(JACK_LIBADD)
+AC_SUBST(JACK_LDFLAGS)
+fi
+
+AC_ARG_WITH(polypaudio,AC_HELP_STRING([--with-polypaudio],[Enable Polypaudio server support [default=check]]),[polypaudio_test="$withval"],[polypaudio_test="yes"])
+
+if test "x$polypaudio_test" = "xyes" ; then
+AC_MSG_CHECKING(for Polypaudio 0.7 or later)
+if $PKG_CONFIG --atleast-version 0.7 polyplib-simple >/dev/null 2>&1 ; then
+  POLYP_CFLAGS="`$PKG_CONFIG --cflags polyplib-simple`"
+  POLYP_LIBADD="`$PKG_CONFIG --libs-only-l polyplib-simple`"
+  POLYP_LDFLAGS="`$PKG_CONFIG --libs-only-L polyplib-simple`"
+  have_polyp=yes
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(HAVE_LIBPOLYP, 1,
+        [Define if you have polyplib (required if you want Polypaudio server support)])
+else
+  AC_MSG_RESULT(not installed)
+fi
+AC_SUBST(POLYP_CFLAGS)
+AC_SUBST(POLYP_LIBADD)
+AC_SUBST(POLYP_LDFLAGS)
+fi
+
+AC_ARG_WITH(
+  libltdl,
+  AC_HELP_STRING([--without-libltdl],
+                    [Use libdl to load akode-plugins @<:@default=use libltdl@:>@]),
+  [libltdl_test="$withval"],
+  [libltdl_test="yes"])
+
+have_libltdl=no
+if test x$libltdl_test = xyes; then
+    KDE_CHECK_HEADERS(ltdl.h, [
+        KDE_CHECK_LIB(ltdl, lt_dlopen, [
+                have_libltdl=yes
+                LIBLTDL="-lltdl"
+                AC_DEFINE(HAVE_LIBLTDL,1,[defined if you have libltdl library and header])
+        ])
+    ])
+fi
+
+AC_SUBST(LIBLTDL)
+
+AM_CONDITIONAL(use_libltdl, test x$have_libltdl = xyes)
+
+KDE_CHECK_LIBPTHREAD
+
+AC_CHECK_LIB(c, posix_madvise, have_posix_madvise=yes)
+AC_CHECK_LIB(c, posix_fadvise, have_posix_fadvise=yes)
+AC_CHECK_LIB(c, madvise, have_madvise=yes)
+AC_CHECK_LIB(c, fadvise, have_fadvise=yes)
+
+if test x$have_madvise = xyes; then
+    AC_LANG_SAVE
+    AC_LANG_CPLUSPLUS
+    AC_MSG_CHECKING([if madvise needs prototype])
+    AC_TRY_COMPILE([
+                #include <sys/types.h>
+                #include <sys/mman.h>
+                ],[
+                  ::madvise((char*)0,0, MADV_SEQUENTIAL);
+                ],[
+                  madvise_needs_prototype=no
+                  AC_MSG_RESULT(no)
+                ],[
+                  madvise_needs_prototype=yes
+                  AC_MSG_RESULT(yes)
+                ])
+    AC_LANG_RESTORE
+    AC_DEFINE(HAVE_MADVISE,1,[Define if your platform has madvise])
+    if test x$madvise_needs_prototype = xyes; then
+      AC_DEFINE(NEED_MADVISE_PROTOTYPE,1,[Define if madvise has no usefull prototype])
+    fi
+
+fi
+
+if test x$have_fadvise = xyes; then
+    AC_DEFINE(HAVE_FADVISE,1,[Define if your platform has fadvise])
+fi
+
+if test x$have_posix_madvise = xyes; then
+    AC_DEFINE(HAVE_POSIX_MADVISE,1,[Define if your platform has posix_madvise])
+fi
+
+if test x$have_posix_fadvise = xyes; then
+    AC_DEFINE(HAVE_POSIX_FADVISE,1,[Define if your platform has posix_fadvise])
+fi
+
+#AC_CHECK_HEADERS(features.h, have_features_h=yes)
+#
+#if test x$have_features_h=xyes; then
+#    AC_DEFINE(HAVE_FEATURES_H, 1, [Define if your platform has the features.h header])
+#fi
+
+#AC_ARG_ENABLE(akodelib,
+#  [  --enable-akodelib        Compile and install akodelib and akode_artsplugin (default yes)], enable_akodelib="$enableval",enable_akodelib=no)
+
+AM_CONDITIONAL(include_mpeg_decoder, test x$have_libMAD = xyes)
+
+usefull_xiph_decoder=yes
+if test x$have_libFLAC$have_libOggFLAC$have_oggvorbis$have_libspeex = xnononono; then
+    usefull_xiph_decoder=no
+fi
+
+AM_CONDITIONAL(include_xiph_decoder, test x$usefull_xiph_decoder = xyes)
+AM_CONDITIONAL(include_src_resampler, test x$have_libsamplerate = xyes)
+AM_CONDITIONAL(include_alsa_sink, test x$kde_has_alsa_1_0 = xyes)
+AM_CONDITIONAL(include_oss_sink, test x$have_oss = xyes)
+AM_CONDITIONAL(include_jack_sink, test x$have_jack = xyes)
+AM_CONDITIONAL(include_polyp_sink, test x$have_polyp = xyes)
+
+AC_MSG_CHECKING(for compilable aKodelib and -arts_plugin)
+
+COMPILE_AKODE=yes
+if test x$have_PTHREAD = xno; then
+    COMPILE_AKODE=no
+fi
+
+AC_MSG_RESULT($COMPILE_AKODE)
+
+if test "x$COMPILE_AKODE" = "xno"; then
+DO_NOT_COMPILE="$DO_NOT_COMPILE akode"
+fi
+
+#if test "x$COMPILE_AKODE$enable_akodelib" = "xyesno"; then
+#DO_NOT_COMPILE="$DO_NOT_COMPILE akode"
+#fi
