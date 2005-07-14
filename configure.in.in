@@ -1,7 +1,5 @@
 AM_CONFIG_HEADER(akode/lib/akode_export.h)
 
-AM_CONDITIONAL(install_akode_artsplugin, test x$build_arts = xyes)
-
 AC_DEFUN([AC_CHECK_LIBFLAC],
 [
   AC_LANG_SAVE
