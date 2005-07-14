@@ -20,13 +20,13 @@
 
 #include <iostream>
 
-#include <akode/localfile.h>
-#include <akode/audiobuffer.h>
-#include <akode/audioframe.h>
-#include <akode/resampler.h>
-#include <akode/decoder.h>
-#include <akode/sink.h>
-#include <akode/buffered_decoder.h>
+#include "../lib/localfile.h"
+#include "../lib/audiobuffer.h"
+#include "../lib/audioframe.h"
+#include "../lib/resampler.h"
+#include "../lib/decoder.h"
+#include "../lib/sink.h"
+#include "../lib/buffered_decoder.h"
 
 #include <getopt.h>
 

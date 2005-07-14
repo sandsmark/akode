@@ -1,3 +1,6 @@
+dnl don't remove the below
+dnl AC_OUTPUT(akode/akode-config)
+
 AM_CONFIG_HEADER(akode/lib/akode_export.h)
 
 AC_DEFUN([AC_CHECK_LIBFLAC],
