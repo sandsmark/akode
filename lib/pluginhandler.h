@@ -24,7 +24,8 @@
 #include <string>
 #include <list>
 
-#include <kdelibs_export.h>
+#include "akode_export.h"
+
 namespace aKode {
 
 using std::string;
@@ -36,7 +37,7 @@ using std::list;
  * Handles the loading and unloading of plugins, must be inherited from by all
  * specialized plugins-handlers.
  */
-class KDE_EXPORT PluginHandler {
+class AKODE_EXPORT PluginHandler {
 public:
     static list<string> listPlugins();
 

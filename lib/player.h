@@ -20,8 +20,10 @@
 
 #ifndef _AKODE_PLAYER_H
 #define _AKODE_PLAYER_H
-#include <kdemacros.h>
 #include <string>
+
+#include "akode_export.h"
+
 using std::string;
 
 namespace aKode {
@@ -35,7 +37,7 @@ class Resampler;
 
 /*!
  */
-class KDE_EXPORT Player {
+class AKODE_EXPORT Player {
 public:
     Player();
     ~Player();

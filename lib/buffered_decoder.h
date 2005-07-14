@@ -22,14 +22,14 @@
 #define _AKODE_BUFFERED_DECODER_H
 
 #include "framedecoder.h"
-#include <kdelibs_export.h>
+#include "akode_export.h"
 
 namespace aKode {
 
 class AudioBuffer;
 class AudioConfiguration;
 
-class KDE_EXPORT BufferedDecoder : public FrameDecoder {
+class AKODE_EXPORT BufferedDecoder : public FrameDecoder {
 public:
     BufferedDecoder();
     virtual ~BufferedDecoder();

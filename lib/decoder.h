@@ -22,7 +22,8 @@
 #define _AKODE_DECODER_H
 
 #include "pluginhandler.h"
-#include <kdelibs_export.h>
+#include "akode_export.h"
+
 namespace aKode {
 
 class AudioConfiguration;
@@ -33,7 +34,7 @@ class AudioConfiguration;
  * There are two subtypes of decoders in aKodeLib: FrameDecoders and StreamDecoders.
  * This class defines the functions shared between them.
  */
-class Decoder {
+class AKODE_EXPORT Decoder {
 public:
     virtual ~Decoder() {};
     /*!
@@ -94,7 +95,7 @@ public:
 /*!
  * Handler for decoder-plugins.
  */
-class KDE_EXPORT DecoderPluginHandler : public PluginHandler, public DecoderPlugin {
+class AKODE_EXPORT DecoderPluginHandler : public PluginHandler, public DecoderPlugin {
 public:
     static list<string> listDecoderPlugins();
 

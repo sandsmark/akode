@@ -23,11 +23,14 @@
 
 #include "pluginhandler.h"
 
+#include "akode_export.h"
+
 namespace aKode {
 
 class AudioFrame;
 class AudioBuffer;
 class AudioConfiguration;
+
 
 //! A generic interface for all sinks
 
@@ -35,7 +38,7 @@ class AudioConfiguration;
  * Sinks are where an audiostream goes. It can in aKodeLib be either an
  * encoder or an audio-output such as ALSA or OSS.
  */
-class Sink {
+class AKODE_EXPORT Sink {
 public:
     virtual ~Sink() {};
     /*!
@@ -84,7 +87,7 @@ public:
     virtual Sink* openSink() = 0;
 };
 
-class SinkPluginHandler : public PluginHandler, public SinkPlugin {
+class AKODE_EXPORT SinkPluginHandler : public PluginHandler, public SinkPlugin {
 public:
     static list<string> listSinkPlugins();
 

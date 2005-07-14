@@ -24,7 +24,7 @@
 #include <pthread.h>
 
 #include "audioframe.h"
-#include <kdelibs_export.h>
+#include "akode_export.h"
 
 namespace aKode {
 
@@ -33,7 +33,7 @@ namespace aKode {
 /*!
  * A buffer of AudioFrame to synchronize audio between two threads, one putting and one getting.
  */
-class KDE_EXPORT AudioBuffer {
+class AKODE_EXPORT AudioBuffer {
     const unsigned int length;
     AudioFrame* buffer;
     volatile unsigned int readPos;
