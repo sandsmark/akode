@@ -1,4 +1,4 @@
-INCLUDES= -I$(top_srcdir)/akode/lib $(all_includes)
+INCLUDES= -I$(top_srcdir)/akode/lib -I$(top_builddir)/akode/lib $(all_includes)
 
 bin_PROGRAMS = akodeplay
 
