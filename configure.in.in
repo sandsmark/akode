@@ -43,6 +43,113 @@ AC_DEFUN([AC_CHECK_LIBOGGFLAC],
   AC_LANG_RESTORE
 ])
 
+AC_DEFUN([KDE_CHECK_OGGVORBIS],
+[
+  have_oggvorbis=yes
+
+  KDE_CHECK_LIB(ogg, ogg_page_version,
+    [:], [have_oggvorbis=no])
+
+  KDE_CHECK_HEADER(vorbis/vorbisfile.h,
+    [:], [have_oggvorbis=no])
+
+  KDE_CHECK_LIB(vorbis, vorbis_info_init,
+    [:], [have_oggvorbis=no])
+
+  KDE_CHECK_LIB(vorbisfile, ov_open,
+    [:], [have_oggvorbis=no], -lvorbis -logg)
+
+  KDE_CHECK_LIB(vorbisenc, vorbis_info_clear,
+    [:], [have_oggvorbis=no])
+
+  KDE_CHECK_LIB(vorbisenc, vorbis_bitrate_addblock,
+    [have_vorbis_value=2], [have_vorbis_value=1])
+
+  if test "x$have_oggvorbis" = xyes; then
+    VORBIS_LIBS="-lvorbis -logg"
+    VORBISFILE_LIBS="-lvorbisfile"
+    VORBISENC_LIBS="-lvorbisenc"
+
+    # for akode/plugins/xiph_decoder/
+    AC_DEFINE_UNQUOTED(HAVE_OGG_VORBIS, 1, [Define if you have ogg/vorbis installed])
+
+  fi
+
+  AC_SUBST(VORBIS_LIBS)
+  AC_SUBST(VORBISFILE_LIBS)
+  AC_SUBST(VORBISENC_LIBS)
+])
+
+AC_DEFUN([KDE_CHECK_OSS],
+[
+  have_oss=no
+
+  AC_CHECK_HEADERS([soundcard.h sys/soundcard.h],
+    [have_oss=yes])
+
+  dnl OpenBSD requires an -lossaudio and soundcard.h to provide OSS audio I/O
+  AC_CHECK_LIB(ossaudio, _oss_ioctl, [LIBOSSAUDIO="-lossaudio"])
+  AC_SUBST(LIBOSSAUDIO)
+])
+
+AC_DEFUN([KDE_CHECK_ALSA],
+[
+  have_alsa=no
+
+  AC_CHECK_HEADERS([sys/asoundlib.h alsa/asoundlib.h],
+    [have_alsa=yes])
+
+  AC_CHECK_LIB(asound, snd_seq_create_simple_port,
+    [:], [have_alsa=no])
+
+  AC_LANG_SAVE
+  AC_LANG_C
+  if test "x$have_alsa" = xyes; then
+    AC_TRY_COMPILE([
+      #include "confdefs.h"
+      #ifdef HAVE_SYS_ASOUNDLIB_H
+      #include <sys/asoundlib.h>
+      #endif
+      #ifdef HAVE_ALSA_ASOUNDLIB_H
+      #include <alsa/asoundlib.h>
+      #endif
+    ],[
+      #if (SND_LIB_MAJOR == 0) && (SND_LIB_MINOR == 9)
+        /* we have ALSA 0.9.x */
+      #else
+        #error not ALSA 0.9.x
+      #endif
+    ],
+    have_alsa_0_9=yes)
+
+    AC_TRY_COMPILE([
+      #include "confdefs.h"
+      #ifdef HAVE_SYS_ASOUNDLIB_H
+      #include <sys/asoundlib.h>
+      #endif
+      #ifdef HAVE_ALSA_ASOUNDLIB_H
+      #include <alsa/asoundlib.h>
+      #endif
+    ],[
+      #if (SND_LIB_MAJOR == 1)
+        /* we have ALSA 1.x */
+      #else
+        #error not ALSA 1.x
+      #endif
+    ],
+    have_alsa_1=yes)
+  fi
+  AC_LANG_RESTORE
+
+  if test "x$have_alsa_0_9" = xyes || test "x$have_alsa_1" = xyes; then
+    LIBASOUND="-lasound"
+    AC_DEFINE(HAVE_LIBASOUND2, 1, [Define if you have libasound.so.2 (required for ALSA 0.9.x/1.x support)])
+  fi
+
+  AC_SUBST(LIBASOUND)
+])
+
+
 AC_ARG_WITH(flac,AC_HELP_STRING([--with-flac],[Enable FLAC support [default=check]]),[flac_test="$withval"],[flac_test="yes"])
 
 if test "x$flac_test" = "xyes" ; then
@@ -274,6 +381,47 @@ fi
 
 AM_CONDITIONAL(include_mpeg_decoder, test x$have_libMAD = xyes)
 
+AC_ARG_WITH(oss,
+  [AS_HELP_STRING(--with-oss,
+    [enable support for OSS @<:@default=check@:>@])],
+  [], with_oss=check)
+
+if test "x$with_oss" != xno; then
+  KDE_CHECK_OSS
+
+  if test "x$with_oss" != xcheck && test "x$have_oss" != xyes; then
+    AC_MSG_FAILURE([--with-oss was given, but test for oss failed])
+  fi
+fi
+
+AC_ARG_WITH(alsa,
+  [AS_HELP_STRING(--with-alsa,
+    [enable support for ALSA @<:@default=check@:>@])],
+  [], with_alsa=check)
+
+have_alsa=no
+if test "x$with_alsa" != xno; then
+  KDE_CHECK_ALSA
+
+  if test "x$with_alsa" != xcheck && test "x$have_alsa" != xyes; then
+    AC_MSG_FAILURE([--with-alsa was given, but test for ALSA failed])
+  fi
+fi
+
+AC_ARG_WITH(vorbis,
+  [AS_HELP_STRING(--with-vorbis,
+    [enable support for Ogg Vorbis @<:@default=check@:>@])],
+  [], with_vorbis=check)
+
+have_oggvorbis=no
+if test "x$with_vorbis" != xno; then
+  KDE_CHECK_OGGVORBIS
+
+  if test "x$with_vorbis" != xcheck && test "x$have_oggvorbis" != xyes; then
+    AC_MSG_FAILURE([--with-vorbis was given, but test for Ogg Vorbis failed])
+  fi
+fi
+
 usefull_xiph_decoder=yes
 if test x$have_libFLAC$have_libOggFLAC$have_oggvorbis$have_libspeex = xnononono; then
     usefull_xiph_decoder=no
@@ -281,7 +429,7 @@ fi
 
 AM_CONDITIONAL(include_xiph_decoder, test x$usefull_xiph_decoder = xyes)
 AM_CONDITIONAL(include_src_resampler, test x$have_libsamplerate = xyes)
-AM_CONDITIONAL(include_alsa_sink, test x$kde_has_alsa_1_0 = xyes)
+AM_CONDITIONAL(include_alsa_sink, test x$has_alsa = xyes)
 AM_CONDITIONAL(include_oss_sink, test x$have_oss = xyes)
 AM_CONDITIONAL(include_jack_sink, test x$have_jack = xyes)
 AM_CONDITIONAL(include_polyp_sink, test x$have_polyp = xyes)
