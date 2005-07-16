@@ -150,14 +150,14 @@ AC_DEFUN([KDE_CHECK_ALSA],
 ])
 
 
-AC_ARG_WITH(flac,AC_HELP_STRING([--with-flac],[Enable FLAC support [default=check]]),[flac_test="$withval"],[flac_test="yes"])
+AC_ARG_WITH(flac,AC_HELP_STRING([--with-flac],[Enable FLAC support @<:@default=check@:>@]),[flac_test="$withval"],[flac_test="yes"])
 
 if test "x$flac_test" = "xyes" ; then
   AC_CHECK_LIBFLAC
   AC_CHECK_LIBOGGFLAC
 fi
 
-AC_ARG_WITH(speex,AC_HELP_STRING([--with-speex],[Enable speex support [default=check]]),[speex_test="$withval"],[speex_test="yes"])
+AC_ARG_WITH(speex,AC_HELP_STRING([--with-speex],[Enable speex support @<:@default=check@:>@]),[speex_test="$withval"],[speex_test="yes"])
 
 if test "x$speex_test" = "xyes" ; then
 AC_MSG_CHECKING(for speex headers)
@@ -219,7 +219,7 @@ if test x$have_libspeex11 = xyes; then
 fi
 fi
 
-AC_ARG_WITH(libmad,AC_HELP_STRING([--with-libmad],[Enable libmad support [default=check]]),[libmad_test="$withval"],[libmad_test="yes"])
+AC_ARG_WITH(libmad,AC_HELP_STRING([--with-libmad],[Enable libmad support @<:@default=check@:>@]),[libmad_test="$withval"],[libmad_test="yes"])
 
 if test "x$libmad_test" = "xyes" ; then
 AC_MSG_CHECKING(for MADlib header)
@@ -248,7 +248,7 @@ LIBS="$kde_save_akode_libs"
 AC_SUBST(MADLIBS)
 fi
 
-AC_ARG_WITH(libsamplerate,AC_HELP_STRING([--with-libsamplerate],[Enable libsamplerate support [default=check]]),[libsamplerate_test="$withval"],[libsamplerate_test="yes"])
+AC_ARG_WITH(libsamplerate,AC_HELP_STRING([--with-libsamplerate],[Enable libsamplerate support @<:@default=check@:>@]),[libsamplerate_test="$withval"],[libsamplerate_test="yes"])
 
 if test "x$libsamplerate_test" = "xyes" ; then
 LIBSAMPLERATE=""
@@ -265,7 +265,7 @@ fi
 dnl Check for pkg-config
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
-AC_ARG_WITH(jack,AC_HELP_STRING([--with-jack],[Enable Jack Audio Connection Kit support [default=check]]),[jack_test="$withval"],[jack_test="yes"])
+AC_ARG_WITH(jack,AC_HELP_STRING([--with-jack],[Enable Jack Audio Connection Kit support @<:@default=check@:>@]),[jack_test="$withval"],[jack_test="yes"])
 
 if test "x$jack_test" = "xyes" ; then
 AC_MSG_CHECKING(for Jack Audio Connection Kit)
@@ -285,7 +285,7 @@ AC_SUBST(JACK_LIBADD)
 AC_SUBST(JACK_LDFLAGS)
 fi
 
-AC_ARG_WITH(polypaudio,AC_HELP_STRING([--with-polypaudio],[Enable Polypaudio server support [default=check]]),[polypaudio_test="$withval"],[polypaudio_test="yes"])
+AC_ARG_WITH(polypaudio,AC_HELP_STRING([--with-polypaudio],[Enable Polypaudio server support @<:@default=check@:>@]),[polypaudio_test="$withval"],[polypaudio_test="yes"])
 
 if test "x$polypaudio_test" = "xyes" ; then
 AC_MSG_CHECKING(for Polypaudio 0.7 or later)
