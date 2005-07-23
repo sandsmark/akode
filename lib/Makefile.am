@@ -11,11 +11,6 @@ libakode_la_SOURCES = bytebuffer.cpp audiobuffer.cpp pluginhandler.cpp \
                       buffered_decoder.cpp \
                       player.cpp magic.cpp
 
-if use_libltdl
-AKODE_LIBDL=$(LIBLTDL)
-else
-AKODE_LIBDL=$(LIBDL)
-endif
 AM_CPPFLAGS = -DAKODE_SEARCHDIR=\"$(libdir)\"
 
 libakode_la_LDFLAGS = -no-undefined -version-info 1:0:0 $(all_libraries)
