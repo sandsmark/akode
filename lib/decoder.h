@@ -95,6 +95,11 @@ public:
      * plugin could not.
      */
     virtual Decoder* openDecoder(File *) { return 0; };
+    /*!
+     * Old version version of openDecoder.
+     * \deprecated
+     */
+    Decoder* openFrameDecoder(File *src) { return openDecoder(src); };
 };
 
 /*!

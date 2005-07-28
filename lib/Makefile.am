@@ -22,4 +22,4 @@ libakode_include_HEADERS = akode_export.h akodelib.h decoder.h sink.h encoder.h 
 	file.h localfile.h mmapfile.h pluginhandler.h \
 	crossfader.h volumefilter.h resampler.h fast_resampler.h \
 	buffered_decoder.h wav_decoder.h auto_sink.h \
-	player.h magic.h converter.h
+	player.h magic.h converter.h framedecoder.h
