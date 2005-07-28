@@ -1,0 +1,15 @@
+The plugins are designed for being packaged and installed separately of akodelib.
+
+Take especially note of the following:
+- Do not install mpeg_decoder if you have software patent concerns
+- Do not install src_resampler and mpeg_decoder if you want a pure LGPL
+  library since they are both derived of GPL libraries.
+- If you wish to install plugins in a non-standard place, you can change the
+  AKODE_SEARCHDIR definition in lib/pluginhandler.cpp.
+- You SHOULD not install sinks for backends you don't use. Thus jack_sink
+  should only be installed when jackd is available, polyp_sink only when
+  the polypaudio server is used and alsa_sink only when using a Linux kernel
+  with ALSA drivers.
+  When using direct aKode playback sinks will be autodetected by loading and
+  probing plugins in this order: polyp, jack, alsa, oss
+
