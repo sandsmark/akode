@@ -99,8 +99,8 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    while (::optind++ < argc) {
-        filename = argv[::optind];
+    while (::optind < argc) {
+        filename = argv[::optind++];
 
         if (!player.load(filename)) {
             cout << "Could not load file: " << filename << endl;
