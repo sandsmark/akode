@@ -93,7 +93,7 @@ public:
      * State: \a Playing -> \a Loaded
      */
     void wait();
-    /*!
+    /* Not implemented!
      * Detach the playing file, and bring the player back to Open state.
      * The detached file will stop and unload by itself when finished
      *
