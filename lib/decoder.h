@@ -124,6 +124,7 @@ public:
      * Loads a decoder-plugin named \a name (xiph, mpc, mpeg..)
      */
     virtual bool load(const string name);
+    virtual void unload();
     bool isLoaded() { return decoder_plugin != 0; };
 protected:
     DecoderPlugin* decoder_plugin;

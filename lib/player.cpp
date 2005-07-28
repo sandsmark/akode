@@ -215,8 +215,14 @@ bool Player::open(const char* sinkname) {
         return false;
     }
     d->sink = d->sink_handler.openSink();
+    if (!d->sink) {
+        AKODE_DEBUG("Could not create " << sinkname << "-sink");
+        return false;
+    }
     if (!d->sink->open()) {
         AKODE_DEBUG("Could not open " << sinkname << "-sink");
+        delete d->sink;
+        d->sink = 0;
         return false;
     }
     setState(Open);

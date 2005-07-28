@@ -53,10 +53,12 @@ bool DecoderPluginHandler::load(const string name)
         } else
             return false;
 
-    if (!res)
-        unload();
-
     return res;
+}
+
+void DecoderPluginHandler::unload() {
+    decoder_plugin = 0;
+    PluginHandler::unload();
 }
 
 Decoder* DecoderPluginHandler::openDecoder(File *src) {

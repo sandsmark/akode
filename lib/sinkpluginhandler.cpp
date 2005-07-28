@@ -53,10 +53,12 @@ bool SinkPluginHandler::load(const string name)
         else
             return false; // plugin not found
 
-    if (!res)
-        unload();
-
     return res;
+}
+
+void SinkPluginHandler::unload() {
+    sink_plugin = 0;
+    PluginHandler::unload();
 }
 
 Sink* SinkPluginHandler::openSink() {

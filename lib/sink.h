@@ -85,6 +85,7 @@ public:
      * Loads the sink-plugin named \a name (alsa,oss..)
      */
     virtual bool load(const string name);
+    virtual void unload();
     bool isLoaded() { return sink_plugin != 0; };
 protected:
     SinkPlugin* sink_plugin;

@@ -63,7 +63,7 @@ public:
      */
     virtual void unload();
     /*!
-     * Ask for a plugin in the library name \a plugin.
+     * Ask for a plugin in the library named \a plugin.
      * Returns 0 on failure.
      */
     void* loadPlugin(const string plugin);
