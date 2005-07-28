@@ -50,7 +50,6 @@ struct Player::private_data
 {
     private_data() : src(0)
                    , frame_decoder(0)
-                   , buffered_decoder(0)
                    , resampler(0)
                    , converter(0)
                    , volume_filter(0)
@@ -69,7 +68,7 @@ struct Player::private_data
     File *src;
 
     Decoder *frame_decoder;
-    BufferedDecoder *buffered_decoder;
+    BufferedDecoder buffered_decoder;
     Resampler *resampler;
     Converter *converter;
     // Volatile because it can be created and destroyed during playback
@@ -100,10 +99,8 @@ struct Player::private_data
     }
     // Called for detached players
     void cleanup() {
-        buffered_decoder->stop();
-        buffered_decoder->closeDecoder();
-        delete buffered_decoder;
-        buffered_decoder = 0;
+        buffered_decoder.stop();
+        buffered_decoder.closeDecoder();
 
         delete frame_decoder;
         delete src;
@@ -136,13 +133,13 @@ static void* run_player(void* arg) {
         if (d->pause) sem_wait(&d->pause_sem);
         if (d->halt) break;
 
-        no_error = d->buffered_decoder->readFrame(&frame);
+        no_error = d->buffered_decoder.readFrame(&frame);
 
         if (!no_error) {
-            if (d->buffered_decoder->eof())
+            if (d->buffered_decoder.eof())
                 goto eof;
             else
-            if (d->buffered_decoder->error())
+            if (d->buffered_decoder.error())
                 goto error;
             else
                 AKODE_DEBUG("Blip?");
@@ -179,7 +176,7 @@ static void* run_player(void* arg) {
 error:
     if (d->detached) d->cleanup();
     else {
-        d->buffered_decoder->stop();
+        d->buffered_decoder.stop();
         if (d->manager)
             d->manager->errorEvent();
     }
@@ -188,7 +185,7 @@ error:
 eof:
     if (d->detached) d->cleanup();
     else {
-        d->buffered_decoder->stop();
+        d->buffered_decoder.stop();
         if (d->manager)
             d->manager->eofEvent();
     }
@@ -373,6 +370,11 @@ bool Player::load(const char* filename) {
         d->converter = 0;
     }
 
+    // connect the streams to play
+    d->buffered_decoder.setBlockingRead(true);
+    d->buffered_decoder.openDecoder(d->frame_decoder);
+    d->buffered_decoder.buffer()->put(&first_frame);
+
     setState(Loaded);
 
     return true;
@@ -412,20 +414,14 @@ void Player::play() {
 
     d->frame_decoder->seek(0);
 
-    // connect the streams to play
-    d->buffered_decoder = new BufferedDecoder();
-    d->buffered_decoder->setBlockingRead(true);
-    d->buffered_decoder->openDecoder(d->frame_decoder);
-
-    d->buffered_decoder->start();
+    // Start buffering
+    d->buffered_decoder.start();
 
     if (pthread_create(&d->player_thread, 0, run_player, d) == 0) {
         d->running = true;
         setState(Playing);
     } else {
         d->running = false;
-        delete d->buffered_decoder;
-        d->buffered_decoder = 0;
         setState(Loaded);
     }
 }
@@ -466,16 +462,14 @@ void Player::stop() {
 
     assert(state() == Playing);
 
-    d->buffered_decoder->stop();
+    d->buffered_decoder.stop();
 
     if (d->running) {
         pthread_join(d->player_thread, 0);
         d->running = false;
     }
 
-    d->buffered_decoder->closeDecoder();
-    delete d->buffered_decoder;
-    d->buffered_decoder = 0;
+    d->buffered_decoder.closeDecoder();
 
     setState(Loaded);
 }
@@ -494,9 +488,7 @@ void Player::wait() {
         d->running = false;
     }
 
-    d->buffered_decoder->closeDecoder();
-    delete d->buffered_decoder;
-    d->buffered_decoder = 0;
+    d->buffered_decoder.closeDecoder();
 
     setState(Loaded);
 }
@@ -555,7 +547,7 @@ Sink* Player::sink() const {
 }
 
 Decoder* Player::decoder() const {
-    return d->buffered_decoder;
+    return &d->buffered_decoder;
 }
 
 Resampler* Player::resampler() const {
