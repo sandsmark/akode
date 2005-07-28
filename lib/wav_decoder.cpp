@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "audioframe.h"
-#include "framedecoder.h"
+#include "decoder.h"
 #include "file.h"
 #include "wav_decoder.h"
 

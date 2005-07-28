@@ -33,7 +33,7 @@
 #endif
 
 #include "audioframe.h"
-#include "framedecoder.h"
+#include "decoder.h"
 #include "file.h"
 #include "flac_decoder.h"
 

@@ -24,14 +24,14 @@
 #include "akodelib.h"
 #ifdef HAVE_SPEEX
 
-#include "framedecoder.h"
+#include "decoder.h"
 
 namespace aKode {
 
 class File;
 class AudioFrame;
 
-class SpeexDecoder : public FrameDecoder {
+class SpeexDecoder : public Decoder {
 public:
     SpeexDecoder(File* src);
     virtual ~SpeexDecoder();
@@ -60,7 +60,7 @@ private:
 class SpeexDecoderPlugin : public DecoderPlugin {
 public:
     virtual bool canDecode(File*);
-    virtual FrameDecoder* openFrameDecoder(File* src) {
+    virtual Decoder* openDecoder(File* src) {
         return new SpeexDecoder(src);
     };
 };

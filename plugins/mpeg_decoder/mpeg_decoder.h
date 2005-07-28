@@ -21,14 +21,14 @@
 #ifndef _AKODE_MPEG_DECODER_H
 #define _AKODE_MPEG_DECODER_H
 
-#include "framedecoder.h"
+#include "decoder.h"
 
 namespace aKode {
 
 class File;
 class AudioFrame;
 
-class MPEGDecoder : public FrameDecoder {
+class MPEGDecoder : public Decoder {
 public:
     MPEGDecoder(File* src);
     virtual ~MPEGDecoder();
@@ -56,7 +56,7 @@ private:
 class MPEGDecoderPlugin : public DecoderPlugin {
 public:
     virtual bool canDecode(File*);
-    virtual MPEGDecoder* openFrameDecoder(File* src)
+    virtual MPEGDecoder* openDecoder(File* src)
     {
         return new MPEGDecoder(src);
     };

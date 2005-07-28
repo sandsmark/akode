@@ -25,7 +25,7 @@
 
 #include "file.h"
 #include "audioframe.h"
-#include "framedecoder.h"
+#include "decoder.h"
 #include "vorbis_decoder.h"
 
 //#include <iostream>

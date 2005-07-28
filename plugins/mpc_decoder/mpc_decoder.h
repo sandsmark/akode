@@ -24,14 +24,14 @@
 #include <config.h>
 //#ifdef AKODE_COMPILE_MPC
 
-#include "framedecoder.h"
+#include "decoder.h"
 
 namespace aKode {
 
 class File;
 class AudioBuffer;
 
-class MPCDecoder : public FrameDecoder {
+class MPCDecoder : public Decoder {
 public:
     MPCDecoder(File* src);
     virtual ~MPCDecoder();
@@ -56,7 +56,7 @@ private:
 class MPCDecoderPlugin : public DecoderPlugin {
 public:
     virtual bool canDecode(File*);
-    virtual MPCDecoder* openFrameDecoder(File* src) {
+    virtual MPCDecoder* openDecoder(File* src) {
         return new MPCDecoder(src);
     };
 };

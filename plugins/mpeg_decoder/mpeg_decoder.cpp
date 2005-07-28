@@ -33,7 +33,6 @@ using std::cerr;
 
 #include "file.h"
 #include "audioframe.h"
-#include "framedecoder.h"
 #include "mpeg_decoder.h"
 
 namespace aKode {

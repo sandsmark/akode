@@ -21,14 +21,14 @@
 #ifndef _AKODE_WAV_DECODER_H
 #define _AKODE_WAV_DECODER_H
 
-#include "framedecoder.h"
+#include "decoder.h"
 
 namespace aKode {
 
 class File;
 class AudioFrame;
 
-class WavDecoder : public FrameDecoder {
+class WavDecoder : public Decoder {
 public:
     WavDecoder(File* src);
     virtual ~WavDecoder();
@@ -53,7 +53,7 @@ private:
 class WavDecoderPlugin : public DecoderPlugin {
 public:
     virtual bool canDecode(File*);
-    virtual FrameDecoder* openFrameDecoder(File* str) {
+    virtual WavDecoder* openDecoder(File* str) {
         return new WavDecoder(str);
     };
 };

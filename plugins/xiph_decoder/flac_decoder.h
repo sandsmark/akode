@@ -24,14 +24,14 @@
 #include "akodelib.h"
 #ifdef HAVE_LIBFLAC
 
-#include "framedecoder.h"
+#include "decoder.h"
 
 namespace aKode {
 
 class File;
 class AudioFrame;
 
-class FLACDecoder : public FrameDecoder {
+class FLACDecoder : public Decoder {
 public:
     FLACDecoder(File* src);
     virtual ~FLACDecoder();
@@ -51,7 +51,7 @@ private:
 };
 
 #ifdef HAVE_LIBOGGFLAC
-class OggFLACDecoder : public FrameDecoder {
+class OggFLACDecoder : public Decoder {
 public:
     OggFLACDecoder(File* src);
     virtual ~OggFLACDecoder();
@@ -74,7 +74,7 @@ private:
 class FLACDecoderPlugin : public DecoderPlugin {
 public:
     virtual bool canDecode(File*);
-    virtual FrameDecoder* openFrameDecoder(File* fil) {
+    virtual Decoder* openDecoder(File* fil) {
         return new FLACDecoder(fil);
     };
 };
@@ -85,7 +85,7 @@ extern "C" FLACDecoderPlugin flac_decoder;
 class OggFLACDecoderPlugin : public DecoderPlugin {
 public:
     virtual bool canDecode(File*);
-    virtual FrameDecoder* openFrameDecoder(File* fil) {
+    virtual Decoder* openDecoder(File* fil) {
         return new OggFLACDecoder(fil);
     };
 };

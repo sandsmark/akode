@@ -21,7 +21,7 @@
 #ifndef _AKODE_BUFFERED_DECODER_H
 #define _AKODE_BUFFERED_DECODER_H
 
-#include "framedecoder.h"
+#include "decoder.h"
 #include "akode_export.h"
 
 namespace aKode {
@@ -29,12 +29,12 @@ namespace aKode {
 class AudioBuffer;
 class AudioConfiguration;
 
-class AKODE_EXPORT BufferedDecoder : public FrameDecoder {
+class AKODE_EXPORT BufferedDecoder : public Decoder {
 public:
     BufferedDecoder();
     virtual ~BufferedDecoder();
 
-    void openDecoder(FrameDecoder*);
+    void openDecoder(Decoder*);
     void closeDecoder();
 
     void start();

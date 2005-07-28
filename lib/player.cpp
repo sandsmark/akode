@@ -24,8 +24,7 @@
 
 #include "audioframe.h"
 #include "audiobuffer.h"
-#include "streamdecoder.h"
-#include "framedecoder.h"
+#include "decoder.h"
 #include "buffered_decoder.h"
 #include "localfile.h"
 #include "volumefilter.h"
@@ -60,12 +59,13 @@ struct Player::private_data
                    , state(Closed)
                    , halt(false)
                    , pause(false)
+                   , detached(false)
                    , running(false)
                    {};
 
     File *src;
 
-    FrameDecoder *frame_decoder;
+    Decoder *frame_decoder;
     BufferedDecoder *buffered_decoder;
     Resampler *resampler;
     Converter *converter;
@@ -83,6 +83,7 @@ struct Player::private_data
 
     volatile bool halt;
     volatile bool pause;
+    volatile bool detached;
     bool running;
     pthread_t player_thread;
     sem_t pause_sem;
@@ -91,50 +92,71 @@ struct Player::private_data
         state = s;
         if (manager) manager->stateChangeEvent(s);
     }
+    // Called for detached players
+    void cleanup() {
+        buffered_decoder->stop();
+        buffered_decoder->closeDecoder();
+        delete buffered_decoder;
+        buffered_decoder = 0;
+
+        delete frame_decoder;
+        delete src;
+
+        frame_decoder = 0;
+        src = 0;
+        decoder_handler.unload();
+
+        delete resampler;
+        delete converter;
+        resampler = 0;
+        converter = 0;
+
+        delete this;
+    }
 };
 
 // The player-thread. It is controlled through the two variables
-// halt and seek_pos in m_data
+// halt and seek_pos in d
 static void* run_player(void* arg) {
-    Player::private_data *m_data = (Player::private_data*)arg;
+    Player::private_data *d = (Player::private_data*)arg;
 
     AudioFrame frame;
     AudioFrame re_frame;
     AudioFrame c_frame;
     bool no_error = true;
-    m_data->halt = false;
+    d->halt = false;
 
     while(true) {
-        if (m_data->pause) sem_wait(&m_data->pause_sem);
-        if (m_data->halt) break;
+        if (d->pause) sem_wait(&d->pause_sem);
+        if (d->halt) break;
 
-        no_error = m_data->buffered_decoder->readFrame(&frame);
+        no_error = d->buffered_decoder->readFrame(&frame);
 
         if (!no_error) {
-            if (m_data->buffered_decoder->eof())
+            if (d->buffered_decoder->eof())
                 goto eof;
             else
-            if (m_data->buffered_decoder->error())
+            if (d->buffered_decoder->error())
                 goto error;
             else
                 AKODE_DEBUG("Blip?");
         }
         else {
             AudioFrame* out_frame = &frame;
-            if (m_data->resampler) {
-                m_data->resampler->doFrame(out_frame, &re_frame);
+            if (d->resampler) {
+                d->resampler->doFrame(out_frame, &re_frame);
                 out_frame = &re_frame;
             }
 
-            if (m_data->converter) {
-                m_data->converter->doFrame(out_frame, &c_frame);
+            if (d->converter) {
+                d->converter->doFrame(out_frame, &c_frame);
                 out_frame = &c_frame;
             }
 
-            if (m_data->volume_filter)
-                m_data->volume_filter->doFrame(out_frame);
+            if (d->volume_filter)
+                d->volume_filter->doFrame(out_frame);
 
-            no_error = m_data->sink->writeFrame(out_frame);
+            no_error = d->sink->writeFrame(out_frame);
 
             if (!no_error) {
                 // ### Check type of error
@@ -143,35 +165,39 @@ static void* run_player(void* arg) {
         }
     }
 
-    // Called by ::stop()
-//     m_data->buffered_decoder->stop();
-    m_data->running = false;
+// Stoped by Player::stop()
+//     d->buffered_decoder->stop();
+    assert(!d->detached);
     return (void*)0;
 
 error:
-    m_data->running = false;
-    m_data->buffered_decoder->stop();
-    if (m_data->manager)
-        m_data->manager->errorEvent();
+    if (d->detached) d->cleanup();
+    else {
+        d->buffered_decoder->stop();
+        if (d->manager)
+            d->manager->errorEvent();
+    }
     return (void*)0;
 
 eof:
-    m_data->running = false;
-    m_data->buffered_decoder->stop();
-    if (m_data->manager)
-        m_data->manager->eofEvent();
+    if (d->detached) d->cleanup();
+    else {
+        d->buffered_decoder->stop();
+        if (d->manager)
+            d->manager->eofEvent();
+    }
     return (void*)0;
 }
 
 Player::Player() {
-    m_data = new private_data;
-    sem_init(&m_data->pause_sem,0,0);
+    d = new private_data;
+    sem_init(&d->pause_sem,0,0);
 }
 
 Player::~Player() {
     close();
-    sem_destroy(&m_data->pause_sem);
-    delete m_data;
+    sem_destroy(&d->pause_sem);
+    delete d;
 }
 
 bool Player::open(string sinkname) {
@@ -180,13 +206,13 @@ bool Player::open(string sinkname) {
 
     assert(state() == Closed);
 
-    m_data->sink_handler.load(sinkname);
-    if (!m_data->sink_handler.isLoaded()) {
+    d->sink_handler.load(sinkname);
+    if (!d->sink_handler.isLoaded()) {
         AKODE_DEBUG("Could not load " << sinkname << "-sink");
         return false;
     }
-    m_data->sink = m_data->sink_handler.openSink();
-    if (!m_data->sink->open()) {
+    d->sink = d->sink_handler.openSink();
+    if (!d->sink->open()) {
         AKODE_DEBUG("Could not open " << sinkname << "-sink");
         return false;
     }
@@ -201,12 +227,12 @@ void Player::close() {
 
     assert(state() == Open);
 
-    delete m_data->volume_filter;
-    m_data->volume_filter = 0;
+    delete d->volume_filter;
+    d->volume_filter = 0;
 
-    delete m_data->sink;
-    m_data->sink = 0;
-    m_data->sink_handler.unload();
+    delete d->sink;
+    d->sink = 0;
+    d->sink_handler.unload();
     setState(Closed);
 }
 
@@ -221,95 +247,95 @@ bool Player::load(string filename) {
 
     assert(state() == Open);
 
-//    m_data->src = new MMapFile(filename.c_str());
-    m_data->src = new LocalFile(filename.c_str());
+//    d->src = new MMapFile(filename.c_str());
+    d->src = new LocalFile(filename.c_str());
 
-    string format = Magic::detectFile(m_data->src);
+    string format = Magic::detectFile(d->src);
     if (!format.empty())
     	AKODE_DEBUG("Guessed format: " << format)
     else {
     	AKODE_DEBUG("akode: Cannot detect mimetype");
-        delete m_data->src;
-        m_data->src = 0;
+        delete d->src;
+        d->src = 0;
         return false;
     }
 
-    if (!m_data->decoder_handler.load(format)) {
+    if (!d->decoder_handler.load(format)) {
     	AKODE_DEBUG("akode: Could not load " << format << "-decoder");
-        delete m_data->src;
-        m_data->src = 0;
+        delete d->src;
+        d->src = 0;
         return false;
     }
 
-    m_data->frame_decoder = m_data->decoder_handler.openFrameDecoder(m_data->src);
-    if (!m_data->frame_decoder) {
-        AKODE_DEBUG("Failed to open FrameDecoder");
-        m_data->decoder_handler.unload();
-        delete m_data->src;
-        m_data->src = 0;
+    d->frame_decoder = d->decoder_handler.openDecoder(d->src);
+    if (!d->frame_decoder) {
+        AKODE_DEBUG("Failed to open Decoder");
+        d->decoder_handler.unload();
+        delete d->src;
+        d->src = 0;
         return false;
     }
 
     AudioFrame first_frame;
 
-    if (!m_data->frame_decoder->readFrame(&first_frame)) {
+    if (!d->frame_decoder->readFrame(&first_frame)) {
         AKODE_DEBUG("Failed to decode first frame");
-        delete m_data->frame_decoder;
-        m_data->frame_decoder = 0;
-        m_data->decoder_handler.unload();
-        delete m_data->src;
-        m_data->src = 0;
+        delete d->frame_decoder;
+        d->frame_decoder = 0;
+        d->decoder_handler.unload();
+        delete d->src;
+        d->src = 0;
         return false;
     }
 
-    int state = m_data->sink->setAudioConfiguration(&first_frame);
+    int state = d->sink->setAudioConfiguration(&first_frame);
     if (state < 0) {
         AKODE_DEBUG("The sink could not be configured for this format");
-        delete m_data->frame_decoder;
-        m_data->frame_decoder = 0;
-        m_data->decoder_handler.unload();
-        delete m_data->src;
-        m_data->src = 0;
+        delete d->frame_decoder;
+        d->frame_decoder = 0;
+        d->decoder_handler.unload();
+        delete d->src;
+        d->src = 0;
         return false;
     }
     else
     if (state > 0) {
         // Configuration not 100% accurate
-        m_data->sample_rate = m_data->sink->audioConfiguration()->sample_rate;
-        if (m_data->sample_rate != first_frame.sample_rate) {
-            if (!m_data->resampler) {
-                m_data->resampler_handler.load("fast");
-                m_data->resampler = m_data->resampler_handler.openResampler();
+        d->sample_rate = d->sink->audioConfiguration()->sample_rate;
+        if (d->sample_rate != first_frame.sample_rate) {
+            if (!d->resampler) {
+                d->resampler_handler.load("fast");
+                d->resampler = d->resampler_handler.openResampler();
             }
-            m_data->resampler->setSampleRate(m_data->sample_rate);
+            d->resampler->setSampleRate(d->sample_rate);
         }
-        int out_channels = m_data->sink->audioConfiguration()->channels;
+        int out_channels = d->sink->audioConfiguration()->channels;
         int in_channels = first_frame.channels;
         if (in_channels != out_channels) {
             // ### We don't do mixing yet
             AKODE_DEBUG("Sample has wrong number of channels");
-            delete m_data->frame_decoder;
-            m_data->frame_decoder = 0;
-            m_data->decoder_handler.unload();
-            delete m_data->src;
-            m_data->src = 0;
+            delete d->frame_decoder;
+            d->frame_decoder = 0;
+            d->decoder_handler.unload();
+            delete d->src;
+            d->src = 0;
             return false;
         }
-        int out_width = m_data->sink->audioConfiguration()->sample_width;
+        int out_width = d->sink->audioConfiguration()->sample_width;
         int in_width = first_frame.sample_width;
         if (in_width != out_width) {
-            if (!m_data->converter)
-                m_data->converter = new Converter(out_width);
+            if (!d->converter)
+                d->converter = new Converter(out_width);
             else
-                m_data->converter->setSampleWidth(out_width);
+                d->converter->setSampleWidth(out_width);
         }
     }
     else
     {
-        delete m_data->resampler;
-        delete m_data->converter;
-        m_data->resampler = 0;
-        m_data->converter = 0;
+        delete d->resampler;
+        delete d->converter;
+        d->resampler = 0;
+        d->converter = 0;
     }
 
     setState(Loaded);
@@ -324,12 +350,17 @@ void Player::unload() {
 
     assert(state() == Loaded);
 
-    delete m_data->frame_decoder;
-    delete m_data->src;
+    delete d->frame_decoder;
+    delete d->src;
 
-    m_data->frame_decoder = 0;
-    m_data->src = 0;
-    m_data->decoder_handler.unload();
+    d->frame_decoder = 0;
+    d->src = 0;
+    d->decoder_handler.unload();
+
+    delete d->resampler;
+    delete d->converter;
+    d->resampler = 0;
+    d->converter = 0;
 
     setState(Open);
 }
@@ -344,46 +375,93 @@ void Player::play() {
 
     assert(state() == Loaded);
 
-    m_data->frame_decoder->seek(0);
+    d->frame_decoder->seek(0);
 
     // connect the streams to play
-    m_data->buffered_decoder = new BufferedDecoder();
-    m_data->buffered_decoder->setBlockingRead(true);
-    m_data->buffered_decoder->openDecoder(m_data->frame_decoder);
+    d->buffered_decoder = new BufferedDecoder();
+    d->buffered_decoder->setBlockingRead(true);
+    d->buffered_decoder->openDecoder(d->frame_decoder);
 
-    m_data->buffered_decoder->start();
+    d->buffered_decoder->start();
 
-    if (pthread_create(&m_data->player_thread, 0, run_player, m_data) == 0) {
-        m_data->running = true;
+    if (pthread_create(&d->player_thread, 0, run_player, d) == 0) {
+        d->running = true;
         setState(Playing);
     } else {
-        m_data->running = false;
-        delete m_data->buffered_decoder;
-        m_data->buffered_decoder = 0;
+        d->running = false;
+        delete d->buffered_decoder;
+        d->buffered_decoder = 0;
         setState(Loaded);
     }
 }
+
+void Player::detach() {
+    if (state() == Closed || state() == Open) return;
+    if (state() == Loaded) return;
+
+    if (state() == Paused) resume();
+
+    assert(state() == Playing);
+
+    if (d->running) {
+        pthread_detach(d->player_thread);
+        d->running = false;
+    }
+
+    private_data * d_new  = new private_data;
+    d_new->sink = d->sink;
+    d_new->volume_filter = d->volume_filter;
+    d_new->sample_rate = d->sample_rate;
+    d_new->state = d->state;
+
+    d->detached = true;
+    d = d_new;
+
+    setState(Open);
+}
+
 
 void Player::stop() {
     if (state() == Closed || state() == Open) return;
     if (state() == Loaded) return;
 
-    // Needs to set halt first to avoid the paused thread to play a soundbite
-    m_data->halt = true;
+    // Needs to set halt first to avoid the paused thread playing a soundbite
+    d->halt = true;
     if (state() == Paused) resume();
 
     assert(state() == Playing);
 
-    m_data->buffered_decoder->stop();
+    d->buffered_decoder->stop();
 
-    if (m_data->running) {
-        pthread_join(m_data->player_thread, 0);
-        m_data->running = false;
+    if (d->running) {
+        pthread_join(d->player_thread, 0);
+        d->running = false;
     }
 
-    m_data->buffered_decoder->closeDecoder();
-    delete m_data->buffered_decoder;
-    m_data->buffered_decoder = 0;
+    d->buffered_decoder->closeDecoder();
+    delete d->buffered_decoder;
+    d->buffered_decoder = 0;
+
+    setState(Loaded);
+}
+
+// Much like stop except we don't send a halt signal
+void Player::wait() {
+    if (state() == Closed || state() == Open) return;
+    if (state() == Loaded) return;
+
+    if (state() == Paused) resume();
+
+    assert(state() == Playing);
+
+    if (d->running) {
+        pthread_join(d->player_thread, 0);
+        d->running = false;
+    }
+
+    d->buffered_decoder->closeDecoder();
+    delete d->buffered_decoder;
+    d->buffered_decoder = 0;
 
     setState(Loaded);
 }
@@ -394,16 +472,16 @@ void Player::pause() {
 
     assert(state() == Playing);
 
-    //m_data->buffer->pause();
-    m_data->pause = true;
+    //d->buffer->pause();
+    d->pause = true;
     setState(Paused);
 }
 
 void Player::resume() {
     if (state() != Paused) return;
 
-    m_data->pause = false;
-    sem_post(&m_data->pause_sem);
+    d->pause = false;
+    sem_post(&d->pause_sem);
 
     setState(Playing);
 }
@@ -412,53 +490,53 @@ void Player::resume() {
 void Player::setVolume(float f) {
     if (f < 0.0 || f > 1.0) return;
 
-    if (f != 1.0 && !m_data->volume_filter) {
+    if (f != 1.0 && !d->volume_filter) {
         VolumeFilter *vf = new VolumeFilter();
         vf->setVolume(f);
-        m_data->volume_filter = vf;
+        d->volume_filter = vf;
     }
     else if (f != 1.0) {
-        m_data->volume_filter->setVolume(f);
+        d->volume_filter->setVolume(f);
     }
-    else if (m_data->volume_filter) {
-        VolumeFilter *f = m_data->volume_filter;
-        m_data->volume_filter = 0;
+    else if (d->volume_filter) {
+        VolumeFilter *f = d->volume_filter;
+        d->volume_filter = 0;
         delete f;
     }
 }
 
 float Player::volume() const {
-    if (!m_data->volume_filter) return 1.0;
+    if (!d->volume_filter) return 1.0;
     else
-        return m_data->volume_filter->volume();
+        return d->volume_filter->volume();
 }
 
 File* Player::file() const {
-    return m_data->src;
+    return d->src;
 }
 
 Sink* Player::sink() const {
-    return m_data->sink;
+    return d->sink;
 }
 
 Decoder* Player::decoder() const {
-    return m_data->buffered_decoder;
+    return d->buffered_decoder;
 }
 
 Resampler* Player::resampler() const {
-    return m_data->resampler;
+    return d->resampler;
 }
 
 Player::State Player::state() const {
-    return m_data->state;
+    return d->state;
 }
 
 void Player::setManager(Manager *manager) {
-    m_data->manager = manager;
+    d->manager = manager;
 }
 
 void Player::setState(Player::State state) {
-    m_data->setState(state);
+    d->setState(state);
 }
 
 } // namespace

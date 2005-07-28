@@ -39,7 +39,7 @@ using std::cerr;
 
 #include "file.h"
 #include "audioframe.h"
-#include "framedecoder.h"
+#include "decoder.h"
 #include "speex_decoder.h"
 
 namespace aKode {

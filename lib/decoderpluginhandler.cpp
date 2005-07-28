@@ -59,16 +59,9 @@ bool DecoderPluginHandler::load(const string name)
     return res;
 }
 
-FrameDecoder* DecoderPluginHandler::openFrameDecoder(File *src) {
+Decoder* DecoderPluginHandler::openDecoder(File *src) {
     if (decoder_plugin)
-        return decoder_plugin->openFrameDecoder(src);
-    else
-        return 0;
-}
-
-StreamDecoder* DecoderPluginHandler::openStreamDecoder(File *src) {
-    if (decoder_plugin)
-        return decoder_plugin->openStreamDecoder(src);
+        return decoder_plugin->openDecoder(src);
     else
         return 0;
 }

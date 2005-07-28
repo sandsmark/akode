@@ -23,7 +23,7 @@
 
 #include "audioframe.h"
 #include "audiobuffer.h"
-#include "framedecoder.h"
+#include "decoder.h"
 #include "crossfader.h"
 #include "buffered_decoder.h"
 
@@ -46,7 +46,7 @@ struct BufferedDecoder::private_data
                    , done(true)
                    , seek_pos(-1) {};
     AudioBuffer *buffer;
-    FrameDecoder *decoder;
+    Decoder *decoder;
     CrossFader *xfader;
     unsigned int fading_time, buffer_size;
     bool blocking;
@@ -99,7 +99,7 @@ BufferedDecoder::~BufferedDecoder() {
     delete d;
 }
 
-void BufferedDecoder::openDecoder(FrameDecoder *decoder) {
+void BufferedDecoder::openDecoder(Decoder *decoder) {
     if (d->state != Closed) closeDecoder();
 
     d->decoder = decoder;

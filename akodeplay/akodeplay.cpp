@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
         file->close();
 
     cout << "Opening decoder for " << filename << endl;
-    FrameDecoder *decoder;
+    Decoder *decoder;
     Resampler *resampler;
     Sink *sink;
 
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
     }
 
     resampler = resamplerPlugin.openResampler();
-    decoder = decoderPlugin.openFrameDecoder(file);
+    decoder = decoderPlugin.openDecoder(file);
     sink = sinkPlugin.openSink();
 
     if (!sink->open()) {

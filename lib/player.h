@@ -36,6 +36,9 @@ class Resampler;
 //! An implementation of a multithreaded aKode-player
 
 /*!
+ * The Player interface provides a clean and simple interface to multithreaded playback.
+ * Notice however that the Player interface itself is not reentrant and should thus only
+ * be used by a single thread.
  */
 class AKODE_EXPORT Player {
 public:
@@ -45,40 +48,70 @@ public:
     /*!
      * Opens a player that outputs to the sink \a sinkname (the "auto"-sink is recommended).
      * Returns false if the device cannot be opened.
+     *
+     * State: \a Closed -> \a Open
      */
     bool open(string sinkname);
     /*!
      * Closes the player and releases the sink
      * Valid in all states.
+     *
+     * State: \a Open -> \a Closed
      */
     void close();
 
     /*!
      * Load the file \a filename and prepare for playing.
      * Return false if the file cannot be loaded or decoded.
+     *
+     * State: \a Open -> \a Loaded
      */
     bool load(string filename);
     /*!
      * Unload the file and release any resources allocated while loaded
+     *
+     * State: \a Loaded -> \a Open
      */
     void unload();
 
     /*!
      * Start playing.
+     *
+     * State: \a Loaded -> \a Playing
      */
     void play();
     /*!
+     * Stop playing and release any resources allocated while playing.
+     *
+     * State: \a Playing -> \a Loaded
+     *        \a Paused -> \a Loaded
+     */
+    void stop();
+    /*!
+     * Waits for the file to finish playing (eof or error) and calls stop.
+     *
+     * State: \a Playing -> \a Loaded
+     */
+    void wait();
+    /*!
+     * Detach the playing file, and bring the player back to Open state.
+     * The detached file will stop and unload by itself when finished
+     *
+     * State: \a Playing -> \a Open
+     */
+    void detach();
+    /*!
      * Pause the player.
+     *
+     * State: \a Playing -> \a Paused
      */
     void pause();
     /*!
      * Resume the player from paused.
+     *
+     * State: \a Paused -> \a Playing
      */
     void resume();
-    /*!
-     * Stop playing and release any resources allocated while playing.
-     */
-    void stop();
 
     /* Not implemented!
      * Prepare to crossfade current file, it can now be safely unloaded and a new file loaded.
@@ -88,10 +121,14 @@ public:
 
     /*!
      * Set the software-volume to \a v. Use a number between 0.0 and 1.0.
+     *
+     * Valid in states \a Playing and \a Paused
      */
     void setVolume(float v);
     /*!
      * Returns the current value of the software-volume.
+     *
+     * Valid in states \a Playing and \a Paused
      */
     float volume() const;
 
@@ -121,7 +158,9 @@ public:
 
     /*!
      * An interface for Player callbacks
-     * Beware the callbacks are all from a local thread
+     *
+     * Beware the callbacks come from a private thread, and methods from
+     * the Player interface should not be called from the callback.
      */
     class Manager {
         Player* m_player;
@@ -131,11 +170,13 @@ public:
              */
             virtual void stateChangeEvent(Player::State) {};
             /*!
-             * Called when a decoder reaches end of file
+             * Called when a decoder halts because it has reached end of file.
+             * The callee should effect a Player::stop()
              */
             virtual void eofEvent() {};
             /*!
-             * Called when a decoder encounters a fatal error
+             * Called when a decoder halts because of a fatal error.
+             * The callee should effect a Player::stop()
              */
             virtual void errorEvent() {};
     };
@@ -147,7 +188,7 @@ public:
 
     struct private_data;
 private:
-    private_data *m_data;
+    private_data *d;
     void setState(State state);
 };
 

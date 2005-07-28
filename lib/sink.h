@@ -65,25 +65,12 @@ public:
     virtual bool writeFrame(AudioFrame* frame) = 0;
 };
 
-/*!
- * StreamSink is an asynchrone version of the ordinary frame sink.
- */
-class StreamSink {
-public:
-    virtual ~StreamSink() {};
-    virtual int setAudioConfiguration(const AudioConfiguration* config) = 0;
-    virtual const AudioConfiguration* audioConfiguration() const = 0;
-    virtual void writeStream(AudioBuffer* buffer) = 0;
-    /*!
-     * Returns the current position in stream in milliseconds.
-     * Returns -1 if the position is unknown.
-     */
-    virtual long position() = 0;
-    virtual void halt() = 0;
-};
-
 class SinkPlugin {
 public:
+    /*!
+     * Asks the plugin to open a Sink, returns 0 if the
+     * plugin could not.
+     */
     virtual Sink* openSink() = 0;
 };
 

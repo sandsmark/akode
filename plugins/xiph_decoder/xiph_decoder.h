@@ -1,4 +1,4 @@
-/*  aKode: Ogg Vorbis-Format
+/*  aKode: Xiph-Format (parent for various Xiph formats)
 
     Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
 
@@ -18,53 +18,25 @@
     Boston, MA 02111-1307, USA.
 */
 
-#ifndef _AKODE_VORBISFORMAT_H
-#define _AKODE_VORBISFORMAT_H
+#ifndef _AKODE_XIPH_DECODER_H
+#define _AKODE_XIPH_DECODER_H
 
 #include "akodelib.h"
-#ifdef HAVE_OGG_VORBIS
 
 #include "decoder.h"
 
 namespace aKode {
 
 class File;
-class AudioFrame;
 
-class VorbisDecoder : public Decoder {
-public:
-    VorbisDecoder(File* src);
-    virtual ~VorbisDecoder();
-
-    virtual bool openFile();
-
-    virtual bool readFrame(AudioFrame*);
-    virtual long length();
-    virtual long position();
-    virtual bool seek(long);
-    virtual bool seekable();
-    virtual bool eof();
-    virtual bool error();
-
-    virtual const AudioConfiguration* audioConfiguration();
-
-    struct private_data;
-private:
-    private_data *m_data;
-};
-
-
-class VorbisDecoderPlugin : public DecoderPlugin {
+class XiphDecoderPlugin : public DecoderPlugin {
 public:
     virtual bool canDecode(File*);
-    virtual VorbisDecoder* openDecoder(File* src) {
-        return new VorbisDecoder(src);
-    };
+    virtual Decoder* openDecoder(File* src);
 };
 
-extern "C" VorbisDecoderPlugin vorbis_decoder;
+extern "C" XiphDecoderPlugin xiph_decoder;
 
 } // namespace
 
-#endif // HAVE_VORBIS
 #endif

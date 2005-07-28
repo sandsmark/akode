@@ -27,16 +27,30 @@
 namespace aKode {
 
 class AudioConfiguration;
+class File;
+class AudioFrame;
 
 //! A generic interface for all decoders
 
 /*!
- * There are two subtypes of decoders in aKodeLib: FrameDecoders and StreamDecoders.
- * This class defines the functions shared between them.
+ * The Decoder works by decoding one audio-frame at a time. It is up to
+ * the decoder itself to decide how large a frame is.
  */
 class AKODE_EXPORT Decoder {
 public:
     virtual ~Decoder() {};
+    /*!
+     * Reads one frame from the decoder.
+     * It is advisable to reuse the the same frame for every readFrame()-call,
+     * as the frame size is likely to be constant in the same file,
+     * which saves re-allocations.
+     *
+     * If readFrame returns false, it can be one of three things:
+     * 1. End-of-File (check eof()).
+     * 2. Fatal error (check error()).
+     * 3. Recoverable error (call readFrame again)
+     */
+    virtual bool readFrame(AudioFrame*) = 0;
     /*!
      * Returns the length of the file/stream in milliseconds.
      * Returns -1 if the length is unknown.
@@ -71,25 +85,16 @@ public:
     virtual const AudioConfiguration* audioConfiguration() = 0;
 };
 
-class FrameDecoder;
-class StreamDecoder;
-class File;
-
 /*!
  * Parent class for decoder plugins
  */
 class DecoderPlugin {
 public:
     /*!
-     * Asks the plugin to open a FrameDecoder, returns 0 if the
-     * plugin only provides a StreamDecoder.
+     * Asks the plugin to open a Decoder, returns 0 if the
+     * plugin could not.
      */
-    virtual FrameDecoder* openFrameDecoder(File *) { return 0; };
-    /*!
-     * Asks the plugin to open a StreamDecoder, returns 0 if the
-     * plugin only provides a FrameDecoder.
-     */
-    virtual StreamDecoder* openStreamDecoder(File *) { return 0; };
+    virtual Decoder* openDecoder(File *) { return 0; };
 };
 
 /*!
@@ -101,8 +106,15 @@ public:
 
     DecoderPluginHandler() : decoder_plugin(0) {};
     DecoderPluginHandler(const string name);
-    FrameDecoder* openFrameDecoder(File *src);
-    StreamDecoder* openStreamDecoder(File *src);
+    /*!
+     * Open a Decoder for the File \a src. Returns 0 if unsuccesfull
+     */
+    Decoder* openDecoder(File *src);
+    /*!
+     * Old version version of openDecoder.
+     * \deprecated
+     */
+    Decoder* openFrameDecoder(File *src) { return openDecoder(src); };
     /*!
      * Loads a decoder-plugin named \a name (xiph, mpc, mpeg..)
      */
