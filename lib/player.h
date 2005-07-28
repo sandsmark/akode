@@ -20,11 +20,8 @@
 
 #ifndef _AKODE_PLAYER_H
 #define _AKODE_PLAYER_H
-#include <string>
 
 #include "akode_export.h"
-
-using std::string;
 
 namespace aKode {
 
@@ -51,7 +48,7 @@ public:
      *
      * State: \a Closed -> \a Open
      */
-    bool open(string sinkname);
+    bool open(const char* sinkname);
     /*!
      * Closes the player and releases the sink
      * Valid in all states.
@@ -66,7 +63,7 @@ public:
      *
      * State: \a Open -> \a Loaded
      */
-    bool load(string filename);
+    bool load(const char* filename);
     /*!
      * Unload the file and release any resources allocated while loaded
      *
@@ -185,6 +182,15 @@ public:
      * Sets an associated callback interface
      */
     void setManager(Manager *manager);
+
+    /*!
+     * Sets the decoder plugin to use. Default is auto-detect.
+     */
+    void setDecoderPlugin(const char* plugin);
+    /*!
+     * Sets the resampler plugin to use. Default is "fast".
+     */
+    void setResamplerPlugin(const char* plugin);
 
     struct private_data;
 private:

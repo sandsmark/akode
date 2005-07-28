@@ -26,6 +26,7 @@
 #include "audiobuffer.h"
 #include "decoder.h"
 #include "buffered_decoder.h"
+#include "mmapfile.h"
 #include "localfile.h"
 #include "volumefilter.h"
 
@@ -55,6 +56,8 @@ struct Player::private_data
                    , volume_filter(0)
                    , sink(0)
                    , manager(0)
+                   , decoder_plugin(0)
+                   , resampler_plugin(0)
                    , sample_rate(0)
                    , state(Closed)
                    , halt(false)
@@ -73,6 +76,9 @@ struct Player::private_data
     VolumeFilter* volatile volume_filter;
     Sink *sink;
     Player::Manager *manager;
+
+    const char* decoder_plugin;
+    const char* resampler_plugin;
 
     SinkPluginHandler sink_handler;
     DecoderPluginHandler decoder_handler;
@@ -200,7 +206,7 @@ Player::~Player() {
     delete d;
 }
 
-bool Player::open(string sinkname) {
+bool Player::open(const char* sinkname) {
     if (state() != Closed)
         close();
 
@@ -236,7 +242,7 @@ void Player::close() {
     setState(Closed);
 }
 
-bool Player::load(string filename) {
+bool Player::load(const char* filename) {
     if (state() == Closed) return false;
 
     if (state() == Paused || state() == Playing)
@@ -247,21 +253,44 @@ bool Player::load(string filename) {
 
     assert(state() == Open);
 
-//    d->src = new MMapFile(filename.c_str());
-    d->src = new LocalFile(filename.c_str());
-
-    string format = Magic::detectFile(d->src);
-    if (!format.empty())
-    	AKODE_DEBUG("Guessed format: " << format)
-    else {
-    	AKODE_DEBUG("akode: Cannot detect mimetype");
+    d->src = new MMapFile(filename);
+    // Test if the file _can_ be mmaped
+    if (!d->src->openRO()) {
         delete d->src;
-        d->src = 0;
-        return false;
+        d->src = new LocalFile(filename);
+        if (!d->src->openRO()) {
+            AKODE_DEBUG("Could not open " << filename);
+            delete d->src;
+            d->src = 0;
+            return false;
+        }
+    }
+    // Some of the later code expects it to be closed
+    d->src->close();
+
+//    d->src = new MMapFile(filename.c_str());
+//    d->src = new LocalFile(filename.c_str());
+
+    if (d->decoder_plugin) {
+        if (!d->decoder_handler.load(d->decoder_plugin))
+            AKODE_DEBUG("Could not load " << d->decoder_plugin << "-decoder");
     }
 
-    if (!d->decoder_handler.load(format)) {
-    	AKODE_DEBUG("akode: Could not load " << format << "-decoder");
+    if (!d->decoder_handler.isLoaded()) {
+        string format = Magic::detectFile(d->src);
+        if (!format.empty())
+            AKODE_DEBUG("Guessed format: " << format)
+        else {
+            AKODE_DEBUG("Cannot detect mimetype");
+            delete d->src;
+            d->src = 0;
+            return false;
+        }
+        if (!d->decoder_handler.load(format))
+            AKODE_DEBUG("Could not load " << format << "-decoder");
+    }
+
+    if (!d->decoder_handler.isLoaded()) {
         delete d->src;
         d->src = 0;
         return false;
@@ -304,8 +333,14 @@ bool Player::load(string filename) {
         d->sample_rate = d->sink->audioConfiguration()->sample_rate;
         if (d->sample_rate != first_frame.sample_rate) {
             if (!d->resampler) {
-                d->resampler_handler.load("fast");
-                d->resampler = d->resampler_handler.openResampler();
+                if (d->resampler_plugin) {
+                    d->resampler_handler.load(d->resampler_plugin);
+                    d->resampler = d->resampler_handler.openResampler();
+                }
+                if (!d->resampler) {
+                    d->resampler_handler.load("fast");
+                    d->resampler = d->resampler_handler.openResampler();
+                }
             }
             d->resampler->setSampleRate(d->sample_rate);
         }
@@ -529,6 +564,16 @@ Resampler* Player::resampler() const {
 
 Player::State Player::state() const {
     return d->state;
+}
+
+void Player::setDecoderPlugin(const char* plugin) {
+    if (plugin && strncmp(plugin, "auto", 4) == 0) plugin = 0;
+    d->decoder_plugin = plugin;
+}
+
+void Player::setResamplerPlugin(const char* plugin) {
+    if (plugin && strncmp(plugin, "fast", 4) == 0) plugin = 0;
+    d->resampler_plugin = plugin;
 }
 
 void Player::setManager(Manager *manager) {
