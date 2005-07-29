@@ -171,7 +171,7 @@ found_format:
     snd_pcm_hw_params_set_period_size_near(m_data->pcm_playback, hw, &period_size, 0);
 
     m_data->fragmentSize = period_size * (wid*config->channels);
-    std::cerr << "akode: ALSA fragment-size: " << m_data->fragmentSize << "\n";
+//     std::cerr << "akode: ALSA fragment-size: " << m_data->fragmentSize << "\n";
 
     delete m_data->buffer;
     m_data->buffer = new char [m_data->fragmentSize];
