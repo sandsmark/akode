@@ -325,6 +325,18 @@ if test x$libltdl_test = xyes; then
     ])
 fi
 
+if test "yes" = "$have_libltdl" ; then
+	# Do nothing, since we've already called CHECK_LIB
+	:
+else
+	KDE_CHECK_LIB(dl, dlopen,
+		[],[
+		AKODE_LIBDL=""
+		DO_NOT_COMPILE="akode $DO_NOT_COMPILE"
+		]
+	)
+fi
+
 AC_SUBST(AKODE_LIBDL)
 
 KDE_CHECK_LIBPTHREAD

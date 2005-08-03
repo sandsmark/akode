@@ -41,6 +41,13 @@ if test "x$have_libMAD" = "xno"; then
         echo ">"
 fi
 
+if test "x$AKODE_LIBDL" = "x" ; then
+	echo ">"
+	echo "> You do not seem to have any dynamic-library manipulation"
+	echo "> library installed. aKode will not be compiled."
+	echo ">"
+fi
+
 #if test "x$have_libltdl" = "xno"; then
 #        echo ">"
 #        echo "> You do not seem to have libltdl installed."
