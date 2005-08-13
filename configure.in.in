@@ -441,7 +441,7 @@ fi
 
 AM_CONDITIONAL(include_xiph_decoder, test x$usefull_xiph_decoder = xyes)
 AM_CONDITIONAL(include_src_resampler, test x$have_libsamplerate = xyes)
-AM_CONDITIONAL(include_alsa_sink, test x$has_alsa = xyes)
+AM_CONDITIONAL(include_alsa_sink, test x$have_alsa = xyes)
 AM_CONDITIONAL(include_oss_sink, test x$have_oss = xyes)
 AM_CONDITIONAL(include_jack_sink, test x$have_jack = xyes)
 AM_CONDITIONAL(include_polyp_sink, test x$have_polyp = xyes)
