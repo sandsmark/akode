@@ -41,6 +41,9 @@ public:
     // Writes blocking
     bool writeFrame(AudioFrame *frame);
 
+//     void pause();
+//     void resume();
+
     struct private_data;
 private:
     template<class T> void _writeFrame(AudioFrame *frame);

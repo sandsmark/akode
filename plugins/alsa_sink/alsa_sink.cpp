@@ -1,6 +1,6 @@
 /*  aKode: ALSA Sink
 
-    Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
+    Copyright (C) 2004-2005 Allan Sandfeld Jensen <kde@carewolf.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -32,7 +32,7 @@ extern "C" { ALSASinkPlugin alsa_sink; }
 
 struct ALSASink::private_data
 {
-    private_data() : pcm_playback(0), buffer(0), error(false) {};
+    private_data() : pcm_playback(0), buffer(0), error(false), can_pause(false) {};
 
     snd_pcm_t *pcm_playback;
 
@@ -42,6 +42,7 @@ struct ALSASink::private_data
     int sampleSize;
     char* buffer;
     bool error;
+    bool can_pause;
 };
 
 ALSASink::ALSASink()
@@ -180,8 +181,10 @@ found_format:
     if (snd_pcm_hw_params(m_data->pcm_playback, hw) < 0) {
         return -1;
     }
-    else
+    else {
+        m_data->can_pause = (snd_pcm_hw_params_can_pause(hw) == 1);
         return res;
+    }
 }
 
 const AudioConfiguration* ALSASink::audioConfiguration() const
@@ -261,6 +264,25 @@ bool ALSASink::writeFrame(AudioFrame* frame)
         return _writeFrame<int32_t>(frame);
 
     return false;
+}
+
+void ALSASink::pause()
+{
+    if (m_data->error) return;
+
+    if (m_data->can_pause) {
+        snd_pcm_pause(m_data->pcm_playback, 1);
+    }
+
+}
+
+// Do not confuse this with snd_pcm_resume which is used to resume from a suspend
+void ALSASink::resume()
+{
+    if (m_data->error) return;
+
+    if (snd_pcm_state( m_data->pcm_playback ) == SND_PCM_STATE_PAUSED)
+        snd_pcm_pause(m_data->pcm_playback, 0);
 }
 
 } // namespace

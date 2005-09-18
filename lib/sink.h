@@ -42,9 +42,13 @@ class AKODE_EXPORT Sink {
 public:
     virtual ~Sink() {};
     /*!
-     * Opens the sinks and returns true if succesfull.
+     * Opens the sink for playing and returns true if succesfull.
      */
     virtual bool open() = 0;
+    /*!
+     * Closes the sink and releases any held resources or processes.
+     */
+    virtual void close() {};
     /*!
      * Tries to configure the sink for the configuration \a config.
      * Returns 0 if a perfect match was possible, positive if a close
@@ -63,6 +67,15 @@ public:
      * will be plugin-specific and cannot be generally relied upon.
      */
     virtual bool writeFrame(AudioFrame* frame) = 0;
+    /*!
+     * Pauses buffer-playback in the sink in case it has a buffer of significance.
+     * Notice that not all sinks are capable of precise pausing.
+     */
+    virtual void pause() {};
+    /*!
+     * Resume from a paused state
+     */
+    virtual void resume() {};
 };
 
 class SinkPlugin {
