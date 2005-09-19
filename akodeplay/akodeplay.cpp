@@ -31,21 +31,21 @@ using namespace aKode;
 
 void usage() {
     cout << "Usage: akodeplay [-s sink] [-r resampler] [-d decoder] filenames.." << endl;
-};
+}
 
 void list_sinks() {
     cout << "Available sinks:" << endl;
     list<string> sinks = SinkPluginHandler::listSinkPlugins();
     for(list<string>::const_iterator s = sinks.begin(); s != sinks.end(); s++)
         cout << "\t" << *s << endl;
-};
+}
 
 void list_decoders() {
     cout << "Available decoders:" << endl;
     list<string> plugins = DecoderPluginHandler::listDecoderPlugins();
     for(list<string>::const_iterator s = plugins.begin(); s != plugins.end(); s++)
         cout << "\t" << *s << endl;
-};
+}
 
 static struct option longoptions[] = {
     {"resampler", 1, 0, 'r'},

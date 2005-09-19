@@ -62,9 +62,9 @@ bool MPEGDecoderPlugin::canDecode(File* src) {
     }
     src->close();
     return res;
-};
+}
 
-extern "C" { MPEGDecoderPlugin mpeg_decoder; };
+extern "C" { MPEGDecoderPlugin mpeg_decoder; }
 
 struct xing_frame {
     // Xing header:
@@ -131,7 +131,7 @@ MPEGDecoder::MPEGDecoder(File *src) {
     m_data->src->fadvise();
 
     m_data->length = m_data->src->length();
-};
+}
 
 MPEGDecoder::~MPEGDecoder() {
     mad_stream_finish(&m_data->stream);
