@@ -26,8 +26,6 @@
 #include <audioframe.h>
 #include "alsa_sink.h"
 
-namespace aKode {
-
 /*
  * resume from suspend
  */
@@ -41,6 +39,7 @@ static int resume(snd_pcm_t *pcm)
   return snd_pcm_prepare(pcm);
 }
 
+namespace aKode {
 
 extern "C" { ALSASinkPlugin alsa_sink; }
 
