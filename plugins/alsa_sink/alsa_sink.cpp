@@ -263,7 +263,7 @@ bool ALSASink::writeFrame(AudioFrame* frame)
     }
 
     if ( snd_pcm_state(m_data->pcm_playback) == SND_PCM_STATE_SUSPENDED ) {
-      int res = resume(m_data->pcm_playback);
+      int res = ::resume(m_data->pcm_playback);
       if (res < 0)
         return false;
     }
