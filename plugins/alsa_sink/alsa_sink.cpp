@@ -222,14 +222,14 @@ bool ALSASink::_writeFrame(AudioFrame* frame)
             int status = snd_pcm_writei(m_data->pcm_playback, m_data->buffer, frames);
             if (status == -EPIPE) {
                 snd_pcm_prepare(m_data->pcm_playback);
-                std::cerr << "akode: ALSA xrun\n";
+                //std::cerr << "akode: ALSA xrun\n";
                 goto xrun;
             }
             else if (status < 0) return false;
             int bytes = snd_pcm_frames_to_bytes(m_data->pcm_playback, status);
             if (m_data->filled != bytes) {
                 int rest = m_data->filled - bytes;
-                std::cerr << "akode: ALSA write-remainder: " << rest << "\n";
+                //std::cerr << "akode: ALSA write-remainder: " << rest << "\n";
                 memmove(m_data->buffer, m_data->buffer + bytes, rest);
                 m_data->filled = rest;
             } else
