@@ -33,6 +33,8 @@ struct AutoSink::private_data
     SinkPluginHandler plugin_handler;
     Sink* sink;
 
+    ~private_data() { delete sink; }
+
     bool tryOpen(const string plugin) {
         if (plugin_handler.load(plugin)) {
             sink = plugin_handler.openSink();
