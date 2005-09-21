@@ -130,7 +130,11 @@ static void* run_player(void* arg) {
     d->halt = false;
 
     while(true) {
-        if (d->pause) sem_wait(&d->pause_sem);
+        if (d->pause) {
+            d->sink->pause();
+            sem_wait(&d->pause_sem);
+            d->sink->resume();
+        }
         if (d->halt) break;
 
         no_error = d->buffered_decoder.readFrame(&frame);
