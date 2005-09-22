@@ -33,8 +33,6 @@ struct AutoSink::private_data
     SinkPluginHandler plugin_handler;
     Sink* sink;
 
-    ~private_data() { delete sink; }
-
     bool tryOpen(const string plugin) {
         if (plugin_handler.load(plugin)) {
             sink = plugin_handler.openSink();
@@ -58,6 +56,7 @@ AutoSink::AutoSink()
 
 AutoSink::~AutoSink()
 {
+    close();
     delete m_data->sink;
     delete m_data;
 }
@@ -75,6 +74,11 @@ bool AutoSink::open()
     if (m_data->tryOpen("oss")) return true;
     // Fail
     return false;
+}
+
+void AutoSink::close()
+{
+    m_data->sink->close();
 }
 
 int AutoSink::setAudioConfiguration(const AudioConfiguration* config)

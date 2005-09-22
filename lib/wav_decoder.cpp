@@ -48,6 +48,7 @@ extern "C" { WavDecoderPlugin wav_decoder; }
 
 struct WavDecoder::private_data
 {
+    private_data() : buffer_length(0), buffer(0) {};
     AudioConfiguration config;
     bool valid;
 
@@ -63,10 +64,6 @@ struct WavDecoder::private_data
 
 WavDecoder::WavDecoder(File *src) {
     m_data = new private_data;
-    m_data->buffer = 0;
-
-    m_data->buffer_length = 0;
-    m_data->buffer = 0;
 
     openFile(src);
 }
