@@ -58,6 +58,7 @@ AutoSink::AutoSink()
 
 AutoSink::~AutoSink()
 {
+    delete m_data->sink;
     delete m_data;
 }
 
