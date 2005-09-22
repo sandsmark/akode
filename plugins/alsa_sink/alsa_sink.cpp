@@ -41,20 +41,6 @@ static int resume(snd_pcm_t *pcm)
 
 namespace aKode {
 
-/*
- * resume from suspend
- */
-static int resume(snd_pcm_t *pcm)
-{
-  int res;
-  while ((res = snd_pcm_resume(pcm)) == -EAGAIN)
-    sleep(1);
-  if (! res)
-    return 0;
-  return snd_pcm_prepare(pcm);
-}
-
-
 extern "C" { ALSASinkPlugin alsa_sink; }
 
 struct ALSASink::private_data
@@ -277,12 +263,6 @@ bool ALSASink::writeFrame(AudioFrame* frame)
 
     if ( snd_pcm_state(m_data->pcm_playback) == SND_PCM_STATE_SUSPENDED ) {
       int res = ::resume(m_data->pcm_playback);
-      if (res < 0)
-        return false;
-    }
-
-    if ( snd_pcm_state(m_data->pcm_playback) == SND_PCM_STATE_SUSPENDED ) {
-      int res = resume(m_data->pcm_playback);
       if (res < 0)
         return false;
     }
