@@ -1,0 +1,7 @@
+Interface=akodeFFMPEGPlayObject,Arts::PlayObject,Arts::StreamPlayObject,Arts::PitchablePlayObject,Arts::SynthModule,Arts::Object
+Library=libarts_akode.la
+Language=C++
+Author=Allan Sandfeld Jensen <kde@carewolf.com>
+Extension=wma,ra,m4a,ram,aac,ac3,ogg
+MimeType=audio/mp4,audio/vnd.rn-realaudio,audio/x-pn-realaudio,audio/x-ms-wma,application/vnd.ms-asf,audio/ac3,audio/aac,audio/mpeg,audio/x-mp3,audio/x-mp2,audio/x-mp1,audio/x-vorbis,video/x-ms-asf
+Preference=5
