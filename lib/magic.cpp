@@ -129,6 +129,10 @@ namespace aKode {
 
        if (end == ".mp3") return "mpeg";
        if (end == ".ogg") return "xiph";
+       if (end == ".wma") return "ffmpeg";
+       if (end == ".m4a") return "ffmpeg";
+       if (end == ".aac") return "ffmpeg";
+       if (end == ".ac3") return "ffmpeg";
        return "";
     }
 
@@ -150,6 +154,15 @@ namespace aKode {
         else
         if (memcmp(magic, "MP+", 3) == 0)
             res = "mpc";
+        else
+        if (memcmp(magic, "\x30\x26\xb2\x75", 4) == 0) // ASF
+            res = "ffmpeg";
+        else
+        if (memcmp(magic, ".RMF", 4) == 0)  // RealAudio
+            res = "ffmpeg";
+        else
+        if (memcmp(magic, ".ra", 3) == 0) // Old RealAudio
+            res = "ffmpeg";
         else
         if (memcmp(magic, "RIFF", 4) == 0)
             res = detectRIFF(src, skip);

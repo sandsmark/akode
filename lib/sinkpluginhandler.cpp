@@ -21,6 +21,7 @@
 #include "akodelib.h"
 #include "sink.h"
 #include "auto_sink.h"
+#include "void_sink.h"
 
 namespace aKode {
 
@@ -30,6 +31,8 @@ list<string> SinkPluginHandler::listSinkPlugins() {
     for (list<string>::const_iterator i = plugin_list.begin(); i != plugin_list.end(); i++)
         if (i->length() > 5 && i->substr(i->length()-5,5) == "_sink")
             sink_list.push_back(i->substr(0,i->length()-5));
+    sink_list.push_back("auto");
+    sink_list.push_back("void");
     return sink_list;
 }
 
@@ -50,6 +53,9 @@ bool SinkPluginHandler::load(const string name)
     else
         if (name == "auto")
             sink_plugin = &auto_sink;
+        else
+        if (name == "void")
+            sink_plugin = &void_sink;
         else
             return false; // plugin not found
 
