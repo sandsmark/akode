@@ -14,8 +14,8 @@
 
     You should have received a copy of the GNU Library General Public License
     along with this library; see the file COPYING.LIB.  If not, write to
-    the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-    Boston, MA 02111-1307, USA.
+    the Free Software Foundation, Inc., 51 Franklin Steet, Fifth Floor,
+    Boston, MA 02110-1301, USA.
 */
 
 #include "akodelib.h"
@@ -55,7 +55,7 @@ extern "C" {
 namespace aKode {
 
 
-bool FFMPEGDecoderPlugin::canDecode(File* src) {
+bool FFMPEGDecoderPlugin::canDecode(File* /*src*/) {
     // ### FIXME
     return true;
 }
@@ -70,7 +70,7 @@ extern "C" { FFMPEGDecoderPlugin ffmpeg_decoder; }
 
 struct FFMPEGDecoder::private_data
 {
-    private_data() : packetSize(0), length(0), position(0),
+    private_data() : packetSize(0), position(0),
                      eof(false), error(false), initialized(false), retries(0) {};
 
     AVFormatContext* ic;
@@ -85,7 +85,6 @@ struct FFMPEGDecoder::private_data
     File *src;
     AudioConfiguration config;
 
-    long length;
     long position;
 
     bool eof, error;
@@ -114,7 +113,8 @@ static bool setAudioConfiguration(AudioConfiguration *config, AVCodecContext *co
 {
     config->sample_rate = codec_context->sample_rate;
     config->channels = codec_context->channels;
-    if (config->channels > 2) return false; // I do not know FFMPEGs surround channel ordering
+    // I do not know FFMPEGs surround channel ordering
+    if (config->channels > 2) return false;
     config->channel_config = MonoStereo;
     switch(codec_context->sample_fmt) {
         case SAMPLE_FMT_S16:
@@ -140,6 +140,8 @@ bool FFMPEGDecoder::openFile() {
     d->src->openRO();
     d->src->fadvise();
 
+    // The following duplicates what av_file_open would normally do
+
     // url_fdopen
     init_put_byte(&d->stream, d->file_buffer, FILE_BUFFER_SIZE, 0, d->src, akode_read, akode_write, akode_seek);
     d->stream.is_streamed = !d->src->seekable();
@@ -152,11 +154,15 @@ bool FFMPEGDecoder::openFile() {
         pd.filename = d->src->filename;
         pd.buf = buf;
         pd.buf_size = 0;
-        d->fmt = av_probe_input_format(&pd, 0);
-        if (!d->fmt) {
-            pd.buf_size = get_buffer(&d->stream, buf, 2048);
-            d->fmt = av_probe_input_format(&pd, 1);
-            // Seek back to 0
+        pd.buf_size = get_buffer(&d->stream, buf, 2048);
+        d->fmt = av_probe_input_format(&pd, 1);
+        // Seek back to 0
+        // copied from url_fseek
+        long offset1 = 0 - (d->stream.pos - (d->stream.buf_end - d->stream.buffer));
+        if (offset1 >= 0 && offset1 <= (d->stream.buf_end - d->stream.buffer)) {
+            /* can do the seek inside the buffer */
+            d->stream.buf_ptr = d->stream.buffer + offset1;
+        } else
             if (!d->src->seek(0)) {
                 d->src->close();
                 return false;
@@ -169,34 +175,43 @@ bool FFMPEGDecoder::openFile() {
     }
     if (!d->fmt) {
         std::cerr << "akode: FFMPEG: Format not found\n";
+        closeFile();
         return false;
     }
 
     if (av_open_input_stream(&d->ic, &d->stream, d->src->filename, d->fmt, 0) != 0)
     {
-        // ### url_fclose
+        closeFile();
         return false;
     }
 
     av_find_stream_info( d->ic );
 
-    // determine the length of the stream
-    d->length = (long)((double)d->ic->streams[0]->duration / (double)AV_TIME_BASE)*1000;
-    d->position = 0;
+    // sanety check
+    if (d->ic->nb_streams != 1 || d->ic->streams[0]->codec->codec_type != CODEC_TYPE_AUDIO)
+    {
+        // for now only accept single stream audio tracks
+        closeFile();
+        return false;
+    }
 
     // Set config
     if (!setAudioConfiguration(&d->config, d->ic->streams[0]->codec))
     {
-        // ### url_fclose
+        closeFile();
         return false;
     }
 
     d->codec = avcodec_find_decoder(d->ic->streams[0]->codec->codec_id);
     if (!d->codec) {
         std::cerr << "akode: FFMPEG: Codec not found\n";
+        closeFile();
         return false;
     }
     avcodec_open( d->ic->streams[0]->codec, d->codec );
+
+    double ffpos = (double)d->ic->streams[0]->start_time / (double)AV_TIME_BASE;
+    d->position = (long)(ffpos * d->config.sample_rate);
 
     return true;
 }
@@ -258,13 +273,25 @@ bool FFMPEGDecoder::readFrame(AudioFrame* frame)
 
     if( d->packetSize <= 0 )
         if (!readPacket()) {
+            std::cerr << "akode: FFMPEG: EOF guessed\n";
             d->eof = true;
             return false;
         }
-
+retry:
     int len = avcodec_decode_audio( d->ic->streams[0]->codec,
                                     (short*)d->buffer, &d->buffer_size,
                                     d->packetData, d->packetSize );
+
+    if (len <= 0) {
+        d->retries++;
+        if (d->retries > 8) {
+            std::cerr << "akode: FFMPEG: Decoding failure\n";
+            d->error = true;
+            return false;
+        }
+        goto retry;
+    } else
+        d->retries = 0;
 
     d->packetSize -= len;
     d->packetData += len;
@@ -285,6 +312,7 @@ bool FFMPEGDecoder::readFrame(AudioFrame* frame)
         default:
             assert(false);
     }
+    if (length == 0) return readFrame(frame);
     std::cout << "Frame length: " << length << "\n";
 
     if( d->packetSize <= 0 )
@@ -297,7 +325,7 @@ bool FFMPEGDecoder::readFrame(AudioFrame* frame)
 
 long FFMPEGDecoder::length() {
     if (!d->initialized) return -1;
-    // ### Returns only the lenght of the first stream
+    // ### Returns only the length of the first stream
     double ffmpeglen = (double)d->ic->streams[0]->duration / (double)AV_TIME_BASE;
     return (long)(ffmpeglen*1000.0);
 }
@@ -322,8 +350,23 @@ bool FFMPEGDecoder::seekable() {
 
 bool FFMPEGDecoder::seek(long pos) {
     if (!d->initialized) return false;
-    // ### Implement
-    return false;
+    AVRational time_base = d->ic->streams[0]->time_base;
+    std::cout<< "time base is " << time_base.num << "/" << time_base.den << "\n";
+    long ffpos = 0;
+    {
+        int div = (pos / (time_base.num*1000)) * time_base.den;
+        int rem = (pos % (time_base.num*1000)) * time_base.den;
+        ffpos = div + rem / (time_base.num*1000);
+    }
+    std::cout<< "seeking to " << pos << "ms\n";
+//     long ffpos = (long)((pos/1000.0)*AV_TIME_BASE);
+    std::cout<< "seeking to " << ffpos << "pos\n";
+    bool res = av_seek_frame(d->ic, 0, ffpos, 0);
+    if (res < 0) return false;
+    else {
+        d->position = (pos * d->config.sample_rate)/1000;
+        return true;
+    }
 }
 
 const AudioConfiguration* FFMPEGDecoder::audioConfiguration() {
