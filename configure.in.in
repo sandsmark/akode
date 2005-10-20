@@ -149,7 +149,6 @@ AC_DEFUN([KDE_CHECK_ALSA],
   AC_SUBST(LIBASOUND)
 ])
 
-
 AC_ARG_WITH(flac,AC_HELP_STRING([--with-flac],[Enable FLAC support @<:@default=check@:>@]),[flac_test="$withval"],[flac_test="yes"])
 
 if test "x$flac_test" = "xyes" ; then
@@ -305,6 +304,36 @@ AC_SUBST(POLYP_LIBADD)
 AC_SUBST(POLYP_LDFLAGS)
 fi
 
+AC_ARG_WITH(ffmpeg,AC_HELP_STRING([--with-ffmpeg],[Enable FFMPEG decoder support @<:@default=no@:>@]),[ffmpeg_test="$withval"],[ffmpeg_test="yes"])
+
+if test "x$ffmpeg_test" = "xyes" ; then
+AC_MSG_CHECKING(for FFMPEG 0.4.9 or later)
+if $PKG_CONFIG --atleast-version 49 libavformat >/dev/null 2>&1 ; then
+if $PKG_CONFIG --atleast-version 49 libavcodec >/dev/null 2>&1 ; then
+  AVFORMAT_CFLAGS="`$PKG_CONFIG --cflags libavformat`"
+  AVCODEC_CFLAGS="`$PKG_CONFIG --cflags libavcodec`"
+  AVFORMAT_LIBADD="`$PKG_CONFIG --libs-only-l libavformat`"
+  AVCODEC_LIBADD="`$PKG_CONFIG --libs-only-l libavcodec`"
+  AVFORMAT_LDFLAGS="`$PKG_CONFIG --libs-only-L libavformat`"
+  AVCODEC_LDFLAGS="`$PKG_CONFIG --libs-only-L libavcodec`"
+  have_ffmpeg=yes
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(HAVE_FFMPEG, 1,
+        [Define if you have libavcodec and libavformat from FFMPEG (required for WMA and RealAudio decoding)])
+else
+  AC_MSG_RESULT(not installed)
+fi
+else
+  AC_MSG_RESULT(not installed)
+fi
+AC_SUBST(AVCODEC_CFLAGS)
+AC_SUBST(AVCODEC_LIBADD)
+AC_SUBST(AVCODEC_LDFLAGS)
+AC_SUBST(AVFORMAT_CFLAGS)
+AC_SUBST(AVFORMAT_LIBADD)
+AC_SUBST(AVFORMAT_LDFLAGS)
+fi
+
 AKODE_LIBDL=-ldl
 
 AC_ARG_WITH(
@@ -445,6 +474,7 @@ AM_CONDITIONAL(include_alsa_sink, test x$have_alsa = xyes)
 AM_CONDITIONAL(include_oss_sink, test x$have_oss = xyes)
 AM_CONDITIONAL(include_jack_sink, test x$have_jack = xyes)
 AM_CONDITIONAL(include_polyp_sink, test x$have_polyp = xyes)
+AM_CONDITIONAL(include_ffmpeg_decoder, test x$have_ffmpeg = xyes)
 
 AC_MSG_CHECKING(for compilable aKodelib and -arts_plugin)
 

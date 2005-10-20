@@ -162,7 +162,7 @@ bool FFMPEGDecoder::openFile() {
         if (offset1 >= 0 && offset1 <= (d->stream.buf_end - d->stream.buffer)) {
             /* can do the seek inside the buffer */
             d->stream.buf_ptr = d->stream.buffer + offset1;
-        } else
+        } else {
             if (!d->src->seek(0)) {
                 d->src->close();
                 return false;
