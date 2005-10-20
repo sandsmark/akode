@@ -304,7 +304,7 @@ AC_SUBST(POLYP_LIBADD)
 AC_SUBST(POLYP_LDFLAGS)
 fi
 
-AC_ARG_WITH(ffmpeg,AC_HELP_STRING([--with-ffmpeg],[Enable FFMPEG decoder support @<:@default=no@:>@]),[ffmpeg_test="$withval"],[ffmpeg_test="no"])
+AC_ARG_WITH(ffmpeg,AC_HELP_STRING([--with-ffmpeg],[Enable experimental FFMPEG decoder support @<:@default=no@:>@]),[ffmpeg_test="$withval"],[ffmpeg_test="no"])
 
 if test "x$ffmpeg_test" = "xyes" ; then
 AC_MSG_CHECKING(for FFMPEG 0.4.9 or later)
