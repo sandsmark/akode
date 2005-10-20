@@ -1,4 +1,4 @@
-/*  aKode: MPEG-Format(MAD)
+/*  aKode: Resampler (Secret Rabbit Code)
 
     Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
 
@@ -17,52 +17,40 @@
     Foundation, Inc., 51 Franklin Steet, Fifth Floor, Boston,
     MA  02110-1301, USA.
 */
+#ifndef _AKODE_SRC_RESAMPLER_H
+#define _AKODE_SRC_RESAMPLER_H
 
-#ifndef _AKODE_MPEG_DECODER_H
-#define _AKODE_MPEG_DECODER_H
+#include "akodelib.h"
 
-#include "decoder.h"
+#include "resampler.h"
 
 namespace aKode {
 
-class File;
 class AudioFrame;
 
-class MPEGDecoder : public Decoder {
+//! High quality resampler using the Secret Rabbit Code library also known as libsamplerate
+
+/*!
+ * This is the high quality resampler. Compared to the default resampler, it is
+ * lot slower, uses primarely float point, and is GPL.
+ */
+class SRCResampler : public Resampler {
 public:
-    MPEGDecoder(File* src);
-    virtual ~MPEGDecoder();
+    SRCResampler();
+    bool doFrame(AudioFrame* in, AudioFrame* out);
+    void setSampleRate(unsigned int rate);
+    void setSpeed(float speed);
 
-    virtual bool readFrame(AudioFrame*);
-    virtual long length();
-    virtual long position();
-    virtual bool seek(long);
-    virtual bool seekable();
-    virtual bool eof();
-    virtual bool error();
-
-    virtual const AudioConfiguration* audioConfiguration();
-
-    struct private_data;
-private:
-    private_data *m_data;
-    bool prepare();
-    bool sync();
-    bool skipID3v2();
-    bool moreData(bool flush = false);
+    float speed;
+    unsigned int sample_rate;
 };
 
-
-class MPEGDecoderPlugin : public DecoderPlugin {
+class SRCResamplerPlugin : public ResamplerPlugin {
 public:
-    virtual bool canDecode(File*);
-    virtual MPEGDecoder* openDecoder(File* src)
-    {
-        return new MPEGDecoder(src);
-    };
+    virtual SRCResampler* openResampler();
 };
 
-extern "C" MPEGDecoderPlugin mpeg_decoder;
+extern "C" SRCResamplerPlugin src_resampler;
 
 } // namespace
 
