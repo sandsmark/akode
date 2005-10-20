@@ -1,6 +1,6 @@
-/*  aKode: Void-Sink
+/*  aKode: Cross-fader
 
-    Copyright (C) 2005 Allan Sandfeld Jensen <kde@carewolf.com>
+    Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -17,59 +17,28 @@
     the Free Software Foundation, Inc., 51 Franklin Steet, Fifth Floor,
     Boston, MA 02110-1301, USA.
 */
-
-#include <config.h>
-
-#include <audioframe.h>
-#include "void_sink.h"
-
-//#include <iostream>
+#ifndef _AKODE_CROSSFADER_H
+#define _AKODE_CROSSFADER_H
 
 namespace aKode {
 
-extern "C" { VoidSinkPlugin void_sink; }
+class AudioFrame;
 
-struct VoidSink::private_data
-{
-    AudioConfiguration config;
+class CrossFader {
+    int time;
+    int pos;
+    AudioFrame source;
+public:
+    // Set number of milliseconds the crosslap should last
+    CrossFader(unsigned int time = 100);
+    bool writeFrame(AudioFrame* frame);
+    bool doFrame(AudioFrame* frame);
+    bool readFrame(AudioFrame* frame);
+    void setLength(unsigned int time);
+    bool full();
+    bool done();
 };
 
-VoidSink::VoidSink()
-{
-    m_data = new private_data;
-}
-
-VoidSink::~VoidSink()
-{
-    close();
-    delete m_data;
-}
-
-bool VoidSink::open()
-{
-    return true;
-}
-
-
-void VoidSink::close()
-{
-}
-
-int VoidSink::setAudioConfiguration(const AudioConfiguration* config)
-{
-    m_data->config = *config;
-
-    return 0;
-}
-
-const AudioConfiguration* VoidSink::audioConfiguration() const
-{
-    return &m_data->config;
-}
-
-bool VoidSink::writeFrame(AudioFrame* frame)
-{
-    return true;
-}
-
 } // namespace
+
+#endif

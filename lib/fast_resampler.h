@@ -1,4 +1,4 @@
-/*  aKode: Auto-Sink
+/*  aKode: Resampler (fast)
 
     Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
 
@@ -17,41 +17,43 @@
     the Free Software Foundation, Inc., 51 Franklin Steet, Fifth Floor,
     Boston, MA 02110-1301, USA.
 */
+#ifndef _AKODE_FAST_RESAMPLER_H
+#define _AKODE_FAST_RESAMPLER_H
 
-#ifndef _AKODE_AUTO_SINK_H
-#define _AKODE_AUTO_SINK_H
-
-#include "sink.h"
+#include "resampler.h"
 
 namespace aKode {
 
-class AudioConfiguration;
 class AudioFrame;
 
-class AutoSink : public Sink {
-public:
-    AutoSink();
-    ~AutoSink();
-    bool open();
-    void close();
-    int setAudioConfiguration(const AudioConfiguration *config);
-    const AudioConfiguration* audioConfiguration() const;
-    // Writes blocking
-    bool writeFrame(AudioFrame *frame);
+//! Fast low quality resampler using linear interpolation
 
-    struct private_data;
-private:
-    private_data *m_data;
+/*!
+ * This is the default resampler, which excels over the SRCResampler
+ * in being LGPL, fast and integer only, but the result is more
+ * noisy.
+ *
+ * The quality of resampling most relevant to low signal samples.
+ * For samples of 44100Hz/16bit or more, it is mostly irrelevant.
+ */
+
+class FastResampler : public Resampler {
+public:
+    FastResampler();
+    bool doFrame(AudioFrame* in, AudioFrame* out);
+    void setSampleRate(unsigned int rate);
+    void setSpeed(float speed);
+
+    float speed;
+    unsigned int sample_rate;
 };
 
-class AutoSinkPlugin : public SinkPlugin {
+class FastResamplerPlugin : public ResamplerPlugin {
 public:
-    virtual AutoSink* openSink() {
-        return new AutoSink();
-    }
+    virtual FastResampler* openResampler();
 };
 
-extern "C" AutoSinkPlugin auto_sink;
+extern "C" FastResamplerPlugin fast_resampler;
 
 } // namespace
 

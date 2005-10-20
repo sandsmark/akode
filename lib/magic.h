@@ -1,6 +1,6 @@
-/*  aKode: Void-Sink
+/*  aKode: Magic header
 
-    Copyright (C) 2005 Allan Sandfeld Jensen <kde@carewolf.com>
+    Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -18,58 +18,22 @@
     Boston, MA 02110-1301, USA.
 */
 
-#include <config.h>
+#ifndef _AKODE_MAGIC_H
+#define _AKODE_MAGIC_H
 
-#include <audioframe.h>
-#include "void_sink.h"
-
-//#include <iostream>
+#include <string>
+using std::string;
 
 namespace aKode {
 
-extern "C" { VoidSinkPlugin void_sink; }
+    class File;
 
-struct VoidSink::private_data
-{
-    AudioConfiguration config;
-};
+    namespace Magic {
+        string detectFile(File *src);
+        string detectRIFF(File *src, int skip=0);
+        //string detectStream(Source *src);
 
-VoidSink::VoidSink()
-{
-    m_data = new private_data;
-}
-
-VoidSink::~VoidSink()
-{
-    close();
-    delete m_data;
-}
-
-bool VoidSink::open()
-{
-    return true;
-}
-
-
-void VoidSink::close()
-{
-}
-
-int VoidSink::setAudioConfiguration(const AudioConfiguration* config)
-{
-    m_data->config = *config;
-
-    return 0;
-}
-
-const AudioConfiguration* VoidSink::audioConfiguration() const
-{
-    return &m_data->config;
-}
-
-bool VoidSink::writeFrame(AudioFrame* frame)
-{
-    return true;
-}
-
+    } // namespace
 } // namespace
+
+#endif

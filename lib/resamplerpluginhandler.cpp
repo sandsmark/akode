@@ -1,6 +1,6 @@
-/*  aKode: Void-Sink
+/*  aKode: ResamplerPluginHandler
 
-    Copyright (C) 2005 Allan Sandfeld Jensen <kde@carewolf.com>
+    Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -18,58 +18,32 @@
     Boston, MA 02110-1301, USA.
 */
 
-#include <config.h>
-
-#include <audioframe.h>
-#include "void_sink.h"
-
-//#include <iostream>
+#include "akodelib.h"
+#include "resampler.h"
+#include "fast_resampler.h"
 
 namespace aKode {
 
-extern "C" { VoidSinkPlugin void_sink; }
-
-struct VoidSink::private_data
+ResamplerPluginHandler::ResamplerPluginHandler(const string lib) : resampler_plugin(0)
 {
-    AudioConfiguration config;
-};
-
-VoidSink::VoidSink()
-{
-    m_data = new private_data;
+    if (lib.size() > 0)
+        load(lib);
 }
 
-VoidSink::~VoidSink()
+bool ResamplerPluginHandler::load(const string name)
 {
-    close();
-    delete m_data;
+    bool res = PluginHandler::load(name+"_resampler");
+    if (res)
+        resampler_plugin = (ResamplerPlugin*)loadPlugin(name+"_resampler");
+    else
+        if (name == "fast")
+            resampler_plugin = &fast_resampler;
+
+    return res && resampler_plugin;
 }
 
-bool VoidSink::open()
-{
-    return true;
+Resampler* ResamplerPluginHandler::openResampler() {
+    return resampler_plugin->openResampler();
 }
 
-
-void VoidSink::close()
-{
-}
-
-int VoidSink::setAudioConfiguration(const AudioConfiguration* config)
-{
-    m_data->config = *config;
-
-    return 0;
-}
-
-const AudioConfiguration* VoidSink::audioConfiguration() const
-{
-    return &m_data->config;
-}
-
-bool VoidSink::writeFrame(AudioFrame* frame)
-{
-    return true;
-}
-
-} // namespace
+} //namespace

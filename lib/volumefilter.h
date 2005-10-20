@@ -1,6 +1,6 @@
-/*  aKode: Void-Sink
+/*  aKode: Volume-filter
 
-    Copyright (C) 2005 Allan Sandfeld Jensen <kde@carewolf.com>
+    Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -17,59 +17,22 @@
     the Free Software Foundation, Inc., 51 Franklin Steet, Fifth Floor,
     Boston, MA 02110-1301, USA.
 */
-
-#include <config.h>
-
-#include <audioframe.h>
-#include "void_sink.h"
-
-//#include <iostream>
+#ifndef _AKODE_VOLUMEFILTER_H
+#define _AKODE_VOLUMEFILTER_H
 
 namespace aKode {
 
-extern "C" { VoidSinkPlugin void_sink; }
+class AudioFrame;
 
-struct VoidSink::private_data
-{
-    AudioConfiguration config;
+class VolumeFilter {
+    float m_volume;
+public:
+    VolumeFilter();
+    bool doFrame(AudioFrame* frame, AudioFrame* frame = 0);
+    void setVolume(float volume);
+    float volume() const;
 };
 
-VoidSink::VoidSink()
-{
-    m_data = new private_data;
-}
-
-VoidSink::~VoidSink()
-{
-    close();
-    delete m_data;
-}
-
-bool VoidSink::open()
-{
-    return true;
-}
-
-
-void VoidSink::close()
-{
-}
-
-int VoidSink::setAudioConfiguration(const AudioConfiguration* config)
-{
-    m_data->config = *config;
-
-    return 0;
-}
-
-const AudioConfiguration* VoidSink::audioConfiguration() const
-{
-    return &m_data->config;
-}
-
-bool VoidSink::writeFrame(AudioFrame* frame)
-{
-    return true;
-}
-
 } // namespace
+
+#endif

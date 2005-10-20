@@ -1,6 +1,6 @@
-/*  aKode: Void-Sink
+/*  aKode: EncopderPluginHandler
 
-    Copyright (C) 2005 Allan Sandfeld Jensen <kde@carewolf.com>
+    Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -18,58 +18,33 @@
     Boston, MA 02110-1301, USA.
 */
 
-#include <config.h>
-
-#include <audioframe.h>
-#include "void_sink.h"
-
-//#include <iostream>
+#include "akodelib.h"
+#include "encoder.h"
 
 namespace aKode {
 
-extern "C" { VoidSinkPlugin void_sink; }
-
-struct VoidSink::private_data
+EncoderPluginHandler::EncoderPluginHandler(const string lib) : encoder_plugin(0)
 {
-    AudioConfiguration config;
-};
-
-VoidSink::VoidSink()
-{
-    m_data = new private_data;
-}
-
-VoidSink::~VoidSink()
-{
-    close();
-    delete m_data;
-}
-
-bool VoidSink::open()
-{
-    return true;
+    if (lib.size() > 0)
+        load(lib);
 }
 
 
-void VoidSink::close()
+bool EncoderPluginHandler::load(const string name)
 {
+    bool res = PluginHandler::load(name+"_encoder");
+    if (res)
+        encoder_plugin = (EncoderPlugin*)loadPlugin(name+"_encoder");
+
+    return res && encoder_plugin;
 }
 
-int VoidSink::setAudioConfiguration(const AudioConfiguration* config)
+Encoder* EncoderPluginHandler::openEncoder(File *dest)
 {
-    m_data->config = *config;
-
-    return 0;
+    if (encoder_plugin)
+        return encoder_plugin->openEncoder(dest);
+    else
+        return 0;
 }
 
-const AudioConfiguration* VoidSink::audioConfiguration() const
-{
-    return &m_data->config;
-}
-
-bool VoidSink::writeFrame(AudioFrame* frame)
-{
-    return true;
-}
-
-} // namespace
+} //namespace

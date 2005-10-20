@@ -1,4 +1,4 @@
-/*  aKode: Void-Sink
+/*  aKode: Converter
 
     Copyright (C) 2005 Allan Sandfeld Jensen <kde@carewolf.com>
 
@@ -17,59 +17,21 @@
     the Free Software Foundation, Inc., 51 Franklin Steet, Fifth Floor,
     Boston, MA 02110-1301, USA.
 */
-
-#include <config.h>
-
-#include <audioframe.h>
-#include "void_sink.h"
-
-//#include <iostream>
+#ifndef _AKODE_CONVERTER_H
+#define _AKODE_CONVERTER_H
 
 namespace aKode {
 
-extern "C" { VoidSinkPlugin void_sink; }
+class AudioFrame;
 
-struct VoidSink::private_data
-{
-    AudioConfiguration config;
+class Converter {
+    int m_sample_width;
+public:
+    Converter(int sample_width = 0);
+    bool doFrame(AudioFrame* in, AudioFrame* out=0);
+    void setSampleWidth(int sample_width);
 };
 
-VoidSink::VoidSink()
-{
-    m_data = new private_data;
-}
-
-VoidSink::~VoidSink()
-{
-    close();
-    delete m_data;
-}
-
-bool VoidSink::open()
-{
-    return true;
-}
-
-
-void VoidSink::close()
-{
-}
-
-int VoidSink::setAudioConfiguration(const AudioConfiguration* config)
-{
-    m_data->config = *config;
-
-    return 0;
-}
-
-const AudioConfiguration* VoidSink::audioConfiguration() const
-{
-    return &m_data->config;
-}
-
-bool VoidSink::writeFrame(AudioFrame* frame)
-{
-    return true;
-}
-
 } // namespace
+
+#endif

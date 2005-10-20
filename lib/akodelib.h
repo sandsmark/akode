@@ -1,4 +1,4 @@
-/*  aKode: Auto-Sink
+/*  aKode: Root header
 
     Copyright (C) 2004 Allan Sandfeld Jensen <kde@carewolf.com>
 
@@ -18,41 +18,29 @@
     Boston, MA 02110-1301, USA.
 */
 
-#ifndef _AKODE_AUTO_SINK_H
-#define _AKODE_AUTO_SINK_H
+#ifndef _AKODE_AKODELIB_H
+#define _AKODE_AKODELIB_H
 
-#include "sink.h"
+#define AKODELIB_MAJOR_VERSION 0
+#define AKODELIB_MINOR_VERSION 9
 
-namespace aKode {
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-class AudioConfiguration;
-class AudioFrame;
-
-class AutoSink : public Sink {
-public:
-    AutoSink();
-    ~AutoSink();
-    bool open();
-    void close();
-    int setAudioConfiguration(const AudioConfiguration *config);
-    const AudioConfiguration* audioConfiguration() const;
-    // Writes blocking
-    bool writeFrame(AudioFrame *frame);
-
-    struct private_data;
-private:
-    private_data *m_data;
-};
-
-class AutoSinkPlugin : public SinkPlugin {
-public:
-    virtual AutoSink* openSink() {
-        return new AutoSink();
-    }
-};
-
-extern "C" AutoSinkPlugin auto_sink;
-
-} // namespace
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#elif defined(HAVE_INTTYPES_H)
+#include <inttypes.h>
+#else
+typedef signed char int8_t;
+typedef unsigned char int8_t;
+typedef signed short int16_t;
+typedef unsigned short int16_t;
+typedef signed int int32_t;
+typedef unsigned int uint32_t;
+typedef signed long long int64_t;
+typedef unsigned long long uint64_t;
+#endif
 
 #endif
