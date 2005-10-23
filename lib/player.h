@@ -114,7 +114,7 @@ public:
      * Prepare to crossfade current file, it can now be safely unloaded and a new file loaded.
      * The crossfade will last for up to \a ms milliseconds.
      */
-    void crossfade(unsigned int ms) {};
+    void crossfade(unsigned int ms) { /*unused arg: */ (void)ms; }
 
     /*!
      * Set the software-volume to \a v. Use a number between 0.0 and 1.0.
