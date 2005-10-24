@@ -1,0 +1,11 @@
+Begin4
+Title:          aKode
+Version:        1.9.92
+Entered-date:   2005-24-10
+Description:    Audio decoding library for the K Desktop Environment (KDE)
+Keywords:       KDE X11 desktop Qt
+Author:         Allan Sandfeld Jensen <kde@carewolf.com>
+Primary-site:   http://carewolf.com/akode
+Platforms:      Unix
+Copying-policy: LGPL
+End
