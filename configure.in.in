@@ -411,6 +411,14 @@ if test x$have_posix_fadvise = xyes; then
     AC_DEFINE(HAVE_POSIX_FADVISE,1,[Define if your platform has posix_fadvise])
 fi
 
+AC_CHECK_HEADERS(getopt.h, have_getopt_h=yes)
+if test x$have_getopt_h = xyes; then
+    AC_CHECK_LIB(c, getopt_long, have_gnu_getopt=yes)
+    if test x$have_gnu_getopt = xyes; then
+        AC_DEFINE(HAVE_GNU_GETOPT,1,[Define if your platform has getopt_long from glibc])
+    fi
+fi
+
 #AC_CHECK_HEADERS(features.h, have_features_h=yes)
 #
 #if test x$have_features_h=xyes; then

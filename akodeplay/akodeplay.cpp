@@ -20,11 +20,16 @@
 
 #include <iostream>
 
+#include "../lib/akodelib.h"
 #include "../lib/player.h"
 #include "../lib/sink.h"
 #include "../lib/decoder.h"
 
-#include <getopt.h>
+#ifdef HAVE_GNU_GETOPT
+  #include <getopt.h>
+#else
+  #include <unistd.h>
+#endif
 
 using namespace std;
 using namespace aKode;
@@ -47,12 +52,14 @@ void list_decoders() {
         cout << "\t" << *s << endl;
 }
 
+#ifdef HAVE_GNU_GETOPT
 static struct option longoptions[] = {
     {"resampler", 1, 0, 'r'},
     {"decoder", 1, 0, 'd'},
     {"sink", 1, 0, 's'},
     {0, 0, 0, 0}
 };
+#endif
 
 int main(int argc, char** argv) {
     const char* resampler_plugin = 0;
@@ -66,7 +73,12 @@ int main(int argc, char** argv) {
     }
 
     int opt;
-    while ((opt = getopt_long(argc, argv,  "r:d:s:", longoptions, 0)) != -1) {
+#ifdef HAVE_GNU_GETOPT
+    while ((opt = getopt_long(argc, argv,  "r:d:s:", longoptions, 0)) != -1)
+#else
+    while ((opt = getopt(argc, argv,  "r:d:s:")) != -1)
+#endif
+    {
         switch (opt) {
             case 'r':
                 resampler_plugin = ::optarg;
