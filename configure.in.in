@@ -80,6 +80,18 @@ AC_DEFUN([KDE_CHECK_OGGVORBIS],
   AC_SUBST(VORBISENC_LIBS)
 ])
 
+AC_DEFUN([KDE_CHECK_SEM],
+[
+  have_sem=no
+
+  AC_CHECK_HEADERS([semaphore.h],
+    [have_sem=yes])
+
+  dnl Solaris requires -lrt
+  AC_CHECK_LIB(rt, sem_init, [LIBSEM="-lrt"])
+  AC_SUBST(LIBSEM)
+])
+
 AC_DEFUN([KDE_CHECK_OSS],
 [
   have_oss=no
@@ -90,6 +102,13 @@ AC_DEFUN([KDE_CHECK_OSS],
   dnl OpenBSD requires an -lossaudio and soundcard.h to provide OSS audio I/O
   AC_CHECK_LIB(ossaudio, _oss_ioctl, [LIBOSSAUDIO="-lossaudio"])
   AC_SUBST(LIBOSSAUDIO)
+])
+
+AC_DEFUN([KDE_CHECK_SUN],
+[
+  have_sun=no
+
+  AC_CHECK_HEADERS([sys/audioio.h], [have_sun=yes])
 ])
 
 AC_DEFUN([KDE_CHECK_ALSA],
@@ -369,6 +388,7 @@ fi
 AC_SUBST(AKODE_LIBDL)
 
 KDE_CHECK_LIBPTHREAD
+KDE_CHECK_SEM
 
 AC_CHECK_LIB(c, posix_madvise, have_posix_madvise=yes)
 AC_CHECK_LIB(c, posix_fadvise, have_posix_fadvise=yes)
@@ -432,7 +452,7 @@ AM_CONDITIONAL(include_mpeg_decoder, test x$have_libMAD = xyes)
 
 AC_ARG_WITH(oss,
   [AS_HELP_STRING(--with-oss,
-    [enable support for OSS @<:@default=check@:>@])],
+    [enable support for OSS output @<:@default=check@:>@])],
   [], with_oss=check)
 
 if test "x$with_oss" != xno; then
@@ -443,9 +463,22 @@ if test "x$with_oss" != xno; then
   fi
 fi
 
+AC_ARG_WITH(sun,
+  [AS_HELP_STRING(--with-sun,
+    [enable support for Sun Audio output @<:@default=check@:>@])],
+  [], with_sun=check)
+
+if test "x$with_sun" != xno; then
+  KDE_CHECK_SUN
+
+  if test "x$with_sun" != xcheck && test "x$have_sun" != xyes; then
+    AC_MSG_FAILURE([--with-sun was given, but test for Sun Audio failed])
+  fi
+fi
+
 AC_ARG_WITH(alsa,
   [AS_HELP_STRING(--with-alsa,
-    [enable support for ALSA @<:@default=check@:>@])],
+    [enable support for ALSA output @<:@default=check@:>@])],
   [], with_alsa=check)
 
 have_alsa=no
@@ -480,11 +513,12 @@ AM_CONDITIONAL(include_xiph_decoder, test x$usefull_xiph_decoder = xyes)
 AM_CONDITIONAL(include_src_resampler, test x$have_libsamplerate = xyes)
 AM_CONDITIONAL(include_alsa_sink, test x$have_alsa = xyes)
 AM_CONDITIONAL(include_oss_sink, test x$have_oss = xyes)
+AM_CONDITIONAL(include_sun_sink, test x$have_sun = xyes)
 AM_CONDITIONAL(include_jack_sink, test x$have_jack = xyes)
 AM_CONDITIONAL(include_polyp_sink, test x$have_polyp = xyes)
 AM_CONDITIONAL(include_ffmpeg_decoder, test x$have_ffmpeg = xyes)
 
-AC_MSG_CHECKING(for compilable aKodelib and -arts_plugin)
+AC_MSG_CHECKING(for compilable aKode)
 
 COMPILE_AKODE=yes
 if test x$have_PTHREAD = xno; then

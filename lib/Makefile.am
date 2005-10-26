@@ -14,7 +14,7 @@ libakode_la_SOURCES = bytebuffer.cpp audiobuffer.cpp pluginhandler.cpp \
 AM_CPPFLAGS = -DAKODE_SEARCHDIR=\"$(libdir)\"
 
 libakode_la_LDFLAGS = -no-undefined -version-info 2:0:0 $(all_libraries)
-libakode_la_LIBADD =  $(LIBPTHREAD) $(AKODE_LIBDL)
+libakode_la_LIBADD =  $(LIBPTHREAD) $(AKODE_LIBDL) $(LIBSEM)
 
 libakode_includedir	= $(includedir)/akode
 libakode_include_HEADERS = akode_export.h akodelib.h decoder.h sink.h encoder.h \

@@ -72,13 +72,16 @@ bool AutoSink::open()
     if (m_data->tryOpen("alsa")) return true;
     // Try OSS
     if (m_data->tryOpen("oss")) return true;
+    // Try Sun Audio
+    if (m_data->tryOpen("sun")) return true;
     // Fail
     return false;
 }
 
 void AutoSink::close()
 {
-    m_data->sink->close();
+    if (m_data->sink)
+        m_data->sink->close();
 }
 
 int AutoSink::setAudioConfiguration(const AudioConfiguration* config)

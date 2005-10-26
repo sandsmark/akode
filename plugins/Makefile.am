@@ -24,6 +24,10 @@ if include_oss_sink
 AKODE_OSS_SINK=oss_sink
 endif
 
+if include_sun_sink
+AKODE_SUN_SINK=sun_sink
+endif
+
 if include_jack_sink
 AKODE_JACK_SINK=jack_sink
 endif
@@ -34,6 +38,6 @@ endif
 
 SUBDIRS= $(AKODE_MPC_DECODER) $(AKODE_XIPH_DECODER) \
          $(AKODE_MPEG_DECODER) $(AKODE_FFMPEG_DECODER) \
-         $(AKODE_ALSA_SINK) $(AKODE_OSS_SINK) \
+         $(AKODE_ALSA_SINK) $(AKODE_OSS_SINK) $(AKODE_SUN_SINK) \
          $(AKODE_JACK_SINK) $(AKODE_POLYP_SINK) \
          $(AKODE_SRC_RESAMPLER)
