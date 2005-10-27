@@ -47,7 +47,7 @@ public:
     struct private_data;
 private:
     template<class T> void _writeFrame(AudioFrame *frame);
-    private_data *m_data;
+    private_data *d;
 };
 
 class OSSSinkPlugin : public SinkPlugin {

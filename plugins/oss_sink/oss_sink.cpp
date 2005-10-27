@@ -34,7 +34,7 @@
 #include <audioframe.h>
 #include "oss_sink.h"
 
-//#include <iostream>
+#include <iostream>
 
 namespace aKode {
 
@@ -42,13 +42,16 @@ extern "C" { OSSSinkPlugin oss_sink; }
 
 struct OSSSink::private_data
 {
-    private_data() : device(0) {};
+    private_data() : audio_fd(-1), device(0), valid(false), buffer(0), buffer_length(0) {};
     int audio_fd;
 
     const char *device;
     AudioConfiguration config;
     int scale;
     bool valid;
+
+    char* buffer;
+    int buffer_length;
 };
 
 
@@ -61,13 +64,14 @@ static const char *_devices[] = {
 
 OSSSink::OSSSink()
 {
-    m_data = new private_data;
+    d = new private_data;
 }
 
 OSSSink::~OSSSink()
 {
     close();
-    delete m_data;
+    delete d->buffer;
+    delete d;
 }
 
 bool OSSSink::open()
@@ -75,41 +79,51 @@ bool OSSSink::open()
     const char** device = _devices;
     while (*device) {
         if(::access(*device, F_OK) == 0) {
-            m_data->device = *device;
+            d->device = *device;
             break;
         }
         device++;
     }
 
-    if (!m_data->device) goto failed;
+    if (!d->device) {
+        std::cerr << "akode: No OSS device found\n";
+        goto failed;
+    }
 
-    m_data->audio_fd = ::open(m_data->device, O_WRONLY, 0);
+    // Set non-blocking to not block on open
+    d->audio_fd = ::open(d->device, O_WRONLY | O_NONBLOCK, 0);
 
-    if (m_data->audio_fd == -1) goto failed;
-    m_data->valid = true;
+    if (d->audio_fd == -1) {
+        std::cerr << "akode: Could not open " << d->device << " for writing\n";
+        goto failed;
+    }
+    // set blocking again to block on write
+    fcntl(d->audio_fd, F_SETFL, O_WRONLY);
+    d->valid = true;
     return true;
 
 failed:
-    m_data->valid = false;
+    d->valid = false;
     return false;
 }
 
 
 void OSSSink::close() {
-    if (m_data->valid) ::close(m_data->audio_fd);
-    m_data->valid = false;
+    if (d->audio_fd != -1) ::close(d->audio_fd);
+    d->audio_fd = -1;
+    d->valid = false;
 }
 
 int OSSSink::setAudioConfiguration(const AudioConfiguration* config)
 {
-    m_data->config = *config;
+    d->config = *config;
 
     int format = AFMT_S16_NE; // 16bit native endian
 
-    ioctl(m_data->audio_fd, SNDCTL_DSP_SETFMT, &format);
+    ioctl(d->audio_fd, SNDCTL_DSP_SETFMT, &format);
 
     if (format != AFMT_S16_NE) return -1;
-    m_data->scale = 16-config->sample_width;
+    d->scale = 16-config->sample_width;
 
     int stereo;
     if (config->channels == 1)
@@ -117,48 +131,53 @@ int OSSSink::setAudioConfiguration(const AudioConfiguration* config)
     else
         stereo = 1;
 
-    ioctl(m_data->audio_fd, SNDCTL_DSP_STEREO, &stereo);
+    ioctl(d->audio_fd, SNDCTL_DSP_STEREO, &stereo);
 
-    m_data->config.channel_config = MonoStereo;
+    d->config.channel_config = MonoStereo;
     if (stereo == 0)
-        m_data->config.channels = 1;
+        d->config.channels = 1;
     else
-        m_data->config.channels = 2;
+        d->config.channels = 2;
 
-    ioctl(m_data->audio_fd, SNDCTL_DSP_SPEED, &m_data->config.sample_rate);
+    ioctl(d->audio_fd, SNDCTL_DSP_SPEED, &d->config.sample_rate);
 
     return 1;
 }
 
 const AudioConfiguration* OSSSink::audioConfiguration() const
 {
-    return &m_data->config;
+    return &d->config;
 }
 
 bool OSSSink::writeFrame(AudioFrame* frame)
 {
-    if (!m_data->valid) return false;
+    if (!d->valid) return false;
 
-    if ( frame->sample_width != m_data->config.sample_width
-      || frame->channels != m_data->config.channels )
+    if ( frame->sample_width != d->config.sample_width
+      || frame->channels != d->config.channels )
     {
         if (setAudioConfiguration(frame) < 0)
             return false;
     }
 
-    int channels = m_data->config.channels;
+    int channels = d->config.channels;
     int length = frame->length;
 
-    int16_t *buffer = (int16_t*)alloca(length*channels*2);
+    if (length*channels*2 > d->buffer_length) {
+        delete d->buffer;
+        d->buffer = new char[length*channels*2];
+    }
+
+    int16_t *buffer = (int16_t*)d->buffer;
     int16_t** data = (int16_t**)frame->data;
     for(int i = 0; i<length; i++)
         for(int j=0; j<channels; j++)
-            buffer[i*channels+j] = data[j][i]<<m_data->scale;
+            buffer[i*channels+j] = data[j][i]<<d->scale;
 
 //    std::cerr << "Writing frame\n";
     int status = 0;
     do {
-        status = ::write(m_data->audio_fd, buffer, channels*length*2);
+        status = ::write(d->audio_fd, buffer, channels*length*2);
         if (status == -1) {
 //            if (errno == EAGAIN) continue;
             if (errno == EINTR) continue;
