@@ -31,7 +31,7 @@
 #include <audioframe.h>
 #include "sun_sink.h"
 
-//#include <iostream>
+#include <iostream>
 
 namespace aKode {
 
@@ -39,7 +39,7 @@ extern "C" { SunSinkPlugin oss_sink; }
 
 struct SunSink::private_data
 {
-    private_data() : audio_fd(-1), device(0) {};
+    private_data() : audio_fd(-1), device(0), valid(false) {};
     int audio_fd;
     audio_info_t auinfo;
 
@@ -63,17 +63,21 @@ SunSink::~SunSink()
 bool SunSink::open()
 {
     const char* device = getenv("AUDIODEV");
-    do {
-        if (device && ::access(device, F_OK) == 0) break;
-        device = "/dev/audio";
-        if (::access(device, F_OK) == 0) break;
+    if (!device) device = "/dev/audio";
+
+    if (::access(device, F_OK) != 0) {
+        std::cerr << "akode: Device not found: " << device << "\n";
         goto failed;
-    } while (false);
+    }
+
     d->device = device;
 
     d->audio_fd = ::open(d->device, O_WRONLY, 0);
 
-    if (d->audio_fd == -1) goto failed;
+    if (d->audio_fd == -1) {
+        std::cerr << "akode: No write access to " << device << "\n";
+        goto failed;
+    }
     d->valid = true;
     return true;
 
