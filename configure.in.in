@@ -54,21 +54,14 @@ AC_DEFUN([KDE_CHECK_OGGVORBIS],
     [:], [have_oggvorbis=no])
 
   KDE_CHECK_LIB(vorbis, vorbis_info_init,
-    [:], [have_oggvorbis=no])
+    [:], [have_oggvorbis=no], -logg)
 
   KDE_CHECK_LIB(vorbisfile, ov_open,
     [:], [have_oggvorbis=no], -lvorbis -logg)
 
-  KDE_CHECK_LIB(vorbisenc, vorbis_info_clear,
-    [:], [have_oggvorbis=no])
-
-  KDE_CHECK_LIB(vorbisenc, vorbis_bitrate_addblock,
-    [have_vorbis_value=2], [have_vorbis_value=1])
-
   if test "x$have_oggvorbis" = xyes; then
     VORBIS_LIBS="-lvorbis -logg"
     VORBISFILE_LIBS="-lvorbisfile"
-    VORBISENC_LIBS="-lvorbisenc"
 
     # for akode/plugins/xiph_decoder/
     AC_DEFINE_UNQUOTED(HAVE_OGG_VORBIS, 1, [Define if you have ogg/vorbis installed])
@@ -77,7 +70,6 @@ AC_DEFUN([KDE_CHECK_OGGVORBIS],
 
   AC_SUBST(VORBIS_LIBS)
   AC_SUBST(VORBISFILE_LIBS)
-  AC_SUBST(VORBISENC_LIBS)
 ])
 
 AC_DEFUN([KDE_CHECK_SEM],
