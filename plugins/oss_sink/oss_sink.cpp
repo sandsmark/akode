@@ -166,6 +166,7 @@ bool OSSSink::writeFrame(AudioFrame* frame)
     if (length*channels*2 > d->buffer_length) {
         delete d->buffer;
         d->buffer = new char[length*channels*2];
+        d->buffer_length = length*channels*2;
     }
 
     int16_t *buffer = (int16_t*)d->buffer;
