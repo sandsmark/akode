@@ -67,7 +67,7 @@ const AudioConfiguration* VoidSink::audioConfiguration() const
     return &m_data->config;
 }
 
-bool VoidSink::writeFrame(AudioFrame* frame)
+bool VoidSink::writeFrame(AudioFrame* /*frame*/)
 {
     return true;
 }
