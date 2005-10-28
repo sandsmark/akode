@@ -69,7 +69,6 @@ OSSSink::OSSSink()
 OSSSink::~OSSSink()
 {
     close();
-    delete d->buffer;
     delete d;
 }
 
@@ -117,6 +116,9 @@ failed:
 void OSSSink::close() {
     if (d->audio_fd != -1) ::close(d->audio_fd);
     d->audio_fd = -1;
+    delete d->buffer;
+    d->buffer = 0;
+    d->buffer_length = 0;
     d->valid = false;
 }
 
@@ -178,23 +180,31 @@ bool OSSSink::writeFrame(AudioFrame* frame)
 
     int channels = d->config.channels;
     int length = frame->length;
+    int bytelen = length*channels*((d->config.sample_width+7)/8);
 
-    if (length*channels*2 > d->buffer_length) {
+    if (bytelen > d->buffer_length) {
         delete d->buffer;
-        d->buffer = new char[length*channels*2];
-        d->buffer_length = length*channels*2;
+        d->buffer = new char[bytelen];
+        d->buffer_length = bytelen;
     }
 
-    int16_t *buffer = (int16_t*)d->buffer;
-    int16_t** data = (int16_t**)frame->data;
-    for(int i = 0; i<length; i++)
-        for(int j=0; j<channels; j++)
-            buffer[i*channels+j] = data[j][i];
+    if (d->config.sample_width == 8) {
+        int8_t *buffer = (int8_t*)d->buffer;
+        int8_t** data = (int8_t**)frame->data;
+        for(int i=0; i<length; i++)
+            for(int j=0; j<channels; j++)
+                buffer[i*channels+j] = data[j][i];
+    } else {
+        int16_t *buffer = (int16_t*)d->buffer;
+        int16_t** data = (int16_t**)frame->data;
+        for(int i=0; i<length; i++)
+            for(int j=0; j<channels; j++)
+                buffer[i*channels+j] = data[j][i];
+    }
 
-//    std::cerr << "Writing frame\n";
     int status = 0;
     do {
-        status = ::write(d->audio_fd, buffer, channels*length*2);
+        status = ::write(d->audio_fd, d->buffer, bytelen);
         if (status == -1) {
 //            if (errno == EAGAIN) continue;
             if (errno == EINTR) continue;
