@@ -43,7 +43,6 @@ struct BufferedDecoder::private_data
                    , running(false)
                    , state(Closed)
                    , halt(false)
-                   , done(true)
                    , seek_pos(-1) {};
     AudioBuffer *buffer;
     Decoder *decoder;
@@ -54,7 +53,7 @@ struct BufferedDecoder::private_data
     BufferedDecoderStatus state;
 
     // Thread controls
-    volatile bool halt, done;
+    volatile bool halt;
     volatile long seek_pos;
     pthread_t thread;
 };
@@ -84,7 +83,6 @@ static void* run_decoder(void* arg) {
         }
     }
 
-    d->done = true;
     d->buffer->setEOF();
 
     return (void*)0;
@@ -122,7 +120,6 @@ void BufferedDecoder::start()
     if (d->state != Open) return;
 
     d->halt = false;
-    d->done = false;
     d->seek_pos = -1;
 
     d->buffer->reset();
@@ -149,7 +146,6 @@ void BufferedDecoder::stop() {
         d->halt = true;
         pthread_join(d->thread, 0);
         d->running = false;
-        assert(d->done);
     }
 
     d->state = Open;
@@ -197,7 +193,7 @@ long BufferedDecoder::position() {
 }
 
 bool BufferedDecoder::eof() {
-    return d->done || (d->buffer && d->buffer->eof());
+    return d->buffer && d->buffer->eof();
 }
 
 bool BufferedDecoder::error() {
