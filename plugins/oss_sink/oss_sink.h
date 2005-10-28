@@ -35,6 +35,7 @@ public:
     OSSSink();
     ~OSSSink();
     bool open();
+    bool openDevice(const char*);
     void close();
     int setAudioConfiguration(const AudioConfiguration *config);
     const AudioConfiguration* audioConfiguration() const;

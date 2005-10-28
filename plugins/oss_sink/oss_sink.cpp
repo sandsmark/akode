@@ -47,7 +47,6 @@ struct OSSSink::private_data
 
     const char *device;
     AudioConfiguration config;
-    int scale;
     bool valid;
 
     char* buffer;
@@ -79,16 +78,23 @@ bool OSSSink::open()
     const char** device = _devices;
     while (*device) {
         if(::access(*device, F_OK) == 0) {
-            d->device = *device;
             break;
         }
         device++;
     }
 
-    if (!d->device) {
+    if (!*device) {
         std::cerr << "akode: No OSS device found\n";
-        goto failed;
+        d->valid = false;
+        return false;
     }
+
+    return openDevice(*device);
+}
+
+bool OSSSink::openDevice(const char *device)
+{
+    d->device = device;
 
     // Set non-blocking to not block on open
     d->audio_fd = ::open(d->device, O_WRONLY | O_NONBLOCK, 0);
@@ -118,12 +124,22 @@ int OSSSink::setAudioConfiguration(const AudioConfiguration* config)
 {
     d->config = *config;
 
-    int format = AFMT_S16_NE; // 16bit native endian
+    int format = 0;
+
+    if (config->sample_width > 0 && config->sample_width <= 8)
+        format = AFMT_S8;
+    else
+        format = AFMT_S16_NE; // 16bit native endian
 
     ioctl(d->audio_fd, SNDCTL_DSP_SETFMT, &format);
 
-    if (format != AFMT_S16_NE) return -1;
-    d->scale = 16-config->sample_width;
+    if (format == AFMT_S16_NE)
+        d->config.sample_width = 16;
+    else
+    if (format == AFMT_S8)
+        d->config.sample_width = 8;
+    else
+        return -1;
 
     int stereo;
     if (config->channels == 1)
@@ -173,7 +189,7 @@ bool OSSSink::writeFrame(AudioFrame* frame)
     int16_t** data = (int16_t**)frame->data;
     for(int i = 0; i<length; i++)
         for(int j=0; j<channels; j++)
-            buffer[i*channels+j] = data[j][i]<<d->scale;
+            buffer[i*channels+j] = data[j][i];
 
 //    std::cerr << "Writing frame\n";
     int status = 0;
