@@ -28,7 +28,7 @@ class VolumeFilter {
     float m_volume;
 public:
     VolumeFilter();
-    bool doFrame(AudioFrame* frame, AudioFrame* frame = 0);
+    bool doFrame(AudioFrame* in, AudioFrame* out = 0);
     void setVolume(float volume);
     float volume() const;
 };
