@@ -37,12 +37,12 @@
 
 #include "player.h"
 
-// #ifndef NDEBUG
+#ifndef NDEBUG
 #include <iostream>
 #define AKODE_DEBUG(x) {std::cerr << "akode: " << x << "\n";}
-// #else
-// #define AKODE_DEBUG(x) { }
-// #endif
+#else
+#define AKODE_DEBUG(x) { }
+#endif
 
 namespace aKode {
 
@@ -339,6 +339,7 @@ bool Player::load(const char* filename) {
         // Configuration not 100% accurate
         d->sample_rate = d->sink->audioConfiguration()->sample_rate;
         if (d->sample_rate != first_frame.sample_rate) {
+            AKODE_DEBUG("Resampling to " << d->sample_rate);
             if (!d->resampler) {
                 if (d->resampler_plugin) {
                     d->resampler_handler.load(d->resampler_plugin);
@@ -366,6 +367,7 @@ bool Player::load(const char* filename) {
         int out_width = d->sink->audioConfiguration()->sample_width;
         int in_width = first_frame.sample_width;
         if (in_width != out_width) {
+            AKODE_DEBUG("Converting to " << out_width << "bits");
             if (!d->converter)
                 d->converter = new Converter(out_width);
             else
