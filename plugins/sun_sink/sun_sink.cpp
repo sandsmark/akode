@@ -35,7 +35,7 @@
 
 namespace aKode {
 
-extern "C" { SunSinkPlugin oss_sink; }
+extern "C" { SunSinkPlugin sun_sink; }
 
 struct SunSink::private_data
 {
