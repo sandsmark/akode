@@ -34,6 +34,7 @@ public:
     virtual ~WavDecoder();
 
     virtual bool openFile(File*);
+    virtual void close();
     virtual bool readFrame(AudioFrame*);
     virtual long length();
     virtual long position();
@@ -46,7 +47,7 @@ public:
 
     struct private_data;
 private:
-    private_data *m_data;
+    private_data *d;
 };
 
 

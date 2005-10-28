@@ -18,13 +18,14 @@
     Boston, MA 02110-1301, USA.
 */
 
-#include <stdio.h>
 #include <string.h>
 
 #include "audioframe.h"
 #include "decoder.h"
 #include "file.h"
 #include "wav_decoder.h"
+
+#include <iostream>
 
 namespace aKode {
 
@@ -48,9 +49,11 @@ extern "C" { WavDecoderPlugin wav_decoder; }
 
 struct WavDecoder::private_data
 {
-    private_data() : buffer_length(0), buffer(0) {};
+    private_data() : valid(false), eof(false), buffer_length(0), buffer(0) {};
     AudioConfiguration config;
     bool valid;
+    bool eof;
+    long position;
 
     long pos;
     long length;
@@ -63,13 +66,13 @@ struct WavDecoder::private_data
 
 
 WavDecoder::WavDecoder(File *src) {
-    m_data = new private_data;
+    d = new private_data;
 
     openFile(src);
 }
 
 bool WavDecoder::openFile(File* src) {
-    m_data->src = src;
+    d->src = src;
     src->openRO();
     src->fadvise();
 
@@ -77,101 +80,108 @@ bool WavDecoder::openFile(File* src) {
     unsigned char buffer[4];
     src->seek(4);
     src->read((char*)buffer, 4); // size of stream
-    m_data->length = buffer[0] + buffer[1]*256 + buffer[2] * (1<<16) + buffer[3] * (1<<24) + 8;
+    d->length = buffer[0] + buffer[1]*256 + buffer[2] * (1<<16) + buffer[3] * (1<<24) + 8;
 
     src->seek(16);
     src->read((char*)buffer, 4); // should really be 16
-    m_data->pos = 20 + buffer[0] + buffer[1]*256;
+    d->pos = 20 + buffer[0] + buffer[1]*256;
     if (buffer[2] != 0 || buffer[3] != 0) goto invalid;
 
     src->read((char*)buffer, 2); // check for compression
     if (*(short*)buffer != 1) goto invalid;
 
     src->read((char*)buffer, 2);
-    m_data->config.channels = buffer[0] + buffer[1]*256;
-    if (m_data->config.channels <=2)
-        m_data->config.channel_config = MonoStereo;
+    d->config.channels = buffer[0] + buffer[1]*256;
+    if (d->config.channels <=2)
+        d->config.channel_config = MonoStereo;
     else
-        m_data->config.channel_config = MultiChannel;
+        d->config.channel_config = MultiChannel;
 
     src->read((char*)buffer, 4);
-    m_data->config.sample_rate = buffer[0] + buffer[1]*256 + buffer[2] * (1<<16) + buffer[3] * (1<<24);
+    d->config.sample_rate = buffer[0] + buffer[1]*256 + buffer[2] * (1<<16) + buffer[3] * (1<<24);
 
     src->seek(34);
     src->read((char*)buffer, 2);
-    m_data->config.sample_width = buffer[0] + buffer[1]*256;
+    d->config.sample_width = buffer[0] + buffer[1]*256;
 
     // Various sanity checks
-    if (m_data->config.sample_width != 8 && m_data->config.sample_width != 16 && m_data->config.sample_width != 32) goto invalid;
-    if (m_data->config.sample_rate > 200000) goto invalid;
+    if (d->config.sample_width != 8 && d->config.sample_width != 16 && d->config.sample_width != 32) goto invalid;
+    if (d->config.sample_rate > 200000) goto invalid;
 
 find_data:
-    src->seek(m_data->pos);
+    src->seek(d->pos);
     src->read((char*)buffer, 4);
     if (memcmp(buffer, "data", 4) != 0)
       if (memcmp(buffer, "clm ", 4) != 0)
         goto invalid;
       else {
         src->read((char*)buffer, 4);
-        m_data->pos = m_data->pos+ 8 + buffer[0] + buffer[1]*256;
+        d->pos = d->pos+ 8 + buffer[0] + buffer[1]*256;
         goto find_data;
       }
 
-    src->seek(m_data->pos+8); // start of data
-    m_data->valid = true;
-    m_data->buffer_length = 4096*((m_data->config.sample_width+7)/8)*m_data->config.channels; // 4096 samples
-    m_data->buffer = new unsigned char[m_data->buffer_length];
+    src->seek(d->pos+8); // start of data
+    d->position = 0;
+    d->valid = true;
+    d->eof = false;
+    // 1024 samples:
+    d->buffer_length = 1024*((d->config.sample_width+7)/8)*d->config.channels;
+    d->buffer = new unsigned char[d->buffer_length];
     return true;
 
 invalid:
-    m_data->valid = false;
+    std::cerr << "Invalid WAV file\n";
+    d->valid = false;
     src->close();
     return false;
 }
 
+void WavDecoder::close() {
+    d->src->close();
+    delete[] d->buffer;
+    d->valid = false;
+}
+
 WavDecoder::~WavDecoder() {
-    m_data->src->close();
-    delete[] m_data->buffer;
-    delete m_data;
+    delete d;
 }
 
 bool WavDecoder::readFrame(AudioFrame* frame)
 {
-    if (!m_data->valid) return false;
+    if (!d->valid || d->eof) return false;
 
-    unsigned long samples = 4096;
+    unsigned long samples = 1024;
     // read a frame
     unsigned long length;
-    length = m_data->src->read((char*)m_data->buffer, m_data->buffer_length);
-    if (length != m_data->buffer_length) {
-        samples = length / (m_data->config.channels * ((m_data->config.sample_width+7)/8));
-        if (m_data->src->eof()) {
-            m_data->src->close();
-            m_data->valid = false;
-        }
+    length = d->src->read((char*)d->buffer, d->buffer_length);
+    if (length != d->buffer_length) {
+        samples = length / (d->config.channels * ((d->config.sample_width+7)/8));
+        if (d->src->eof()) d->eof = true;
     }
-
+    d->pos += length;
+    d->position += samples;
     // Ensure the frame is properly configured
-    frame->reserveSpace(&m_data->config, samples);
+    frame->reserveSpace(&d->config, samples);
 
-    int channels = m_data->config.channels;
-    if (m_data->config.sample_width == 8) {
-        uint8_t* buffer = (uint8_t*)m_data->buffer;
+    int channels = d->config.channels;
+    if (d->config.sample_width == 8) {
+        // WAV 8bit is unsigned
+        uint8_t* buffer = (uint8_t*)d->buffer;
         int8_t** data = (int8_t**)frame->data;
         for(unsigned int i=0; i<samples; i++)
             for(int j=0; j<channels; j++)
-                data[j][i] = (int)(buffer[i*channels+j])-128;
+                data[j][i] = (int(buffer[i*channels+j])) - 128;
     }
     else
-    if (m_data->config.sample_width == 16) {
-        int16_t* buffer = (int16_t*)m_data->buffer;
+    if (d->config.sample_width == 16) {
+        int16_t* buffer = (int16_t*)d->buffer;
         int16_t** data = (int16_t**)frame->data;
         for(unsigned int i=0; i<samples; i++)
             for(int j=0; j<channels; j++)
                 data[j][i] = buffer[i*channels+j];
     } else
-    if (m_data->config.sample_width == 32) {
-        int32_t* buffer = (int32_t*)m_data->buffer;
+    if (d->config.sample_width == 32) {
+        int32_t* buffer = (int32_t*)d->buffer;
         int32_t** data = (int32_t**)frame->data;
         for(unsigned int i=0; i<samples; i++)
             for(int j=0; j<channels; j++)
@@ -179,47 +189,50 @@ bool WavDecoder::readFrame(AudioFrame* frame)
     } else
         return false;
 
+    frame->pos = position();
+
     return true;
 }
 
 long WavDecoder::length() {
-    if (!m_data->valid) return -1;
-    long byterate = m_data->config.sample_rate * m_data->config.channels * ((m_data->config.sample_width+7)/8);
-    return (m_data->length-44)/byterate;
+    if (!d->valid) return -1;
+    long byterate = d->config.sample_rate * d->config.channels * ((d->config.sample_width+7)/8);
+    return (d->length-44)/byterate;
 }
 
 long WavDecoder::position() {
-    if (!m_data->valid) return -1;
-    long byterate = m_data->config.sample_rate * m_data->config.channels * ((m_data->config.sample_width+7)/8);
-    return (m_data->pos-44)/byterate;
+    if (!d->valid) return -1;
+    long div = (d->position / d->config.sample_rate) * 1000;
+    long rem = (d->position % d->config.sample_rate) * 1000;
+    return div + (rem / d->config.sample_rate);
 }
 
 bool WavDecoder::eof() {
-    return (m_data->src->eof());
+    return d->eof;
 }
 
 bool WavDecoder::error() {
-    return !m_data->valid;
+    return !d->valid;
 }
 
 bool WavDecoder::seek(long pos) {
-    int samplesize = m_data->config.channels * ((m_data->config.sample_width+7)/8);
-    long byterate = m_data->config.sample_rate * samplesize;
+    int samplesize = d->config.channels * ((d->config.sample_width+7)/8);
+    long byterate = d->config.sample_rate * samplesize;
     long sample_pos = (pos * byterate) / 1000;
     long byte_pos = sample_pos * samplesize;
-    if (byte_pos+44 >= m_data->length) return false;
-    if (!m_data->src->seek(byte_pos+44)) return false;
-    m_data->pos = byte_pos + 44;
+    if (byte_pos+44 >= d->length) return false;
+    if (!d->src->seek(byte_pos+44)) return false;
+    d->pos = byte_pos + 44;
     return true;
 }
 
 bool WavDecoder::seekable() {
-    return m_data->src->seekable();
+    return d->src->seekable();
 }
 
 const AudioConfiguration* WavDecoder::audioConfiguration() {
-    if (!m_data->valid) return 0;
-    return &m_data->config;
+    if (!d->valid) return 0;
+    return &d->config;
 }
 
 } // namespace
