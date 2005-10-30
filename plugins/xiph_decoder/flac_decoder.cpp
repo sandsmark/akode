@@ -525,12 +525,12 @@ bool OggFLACDecoder::readFrame(AudioFrame* frame) {
 #endif
 
 long FLACDecoder::length() {
-    float pos = m_data->length/m_data->config.sample_rate;
+    float pos = ((float)m_data->length)/m_data->config.sample_rate;
     return (long)(pos*1000.0);
 }
 
 long FLACDecoder::position() {
-    float pos = m_data->position/m_data->config.sample_rate;
+    float pos = ((float)m_data->position)/m_data->config.sample_rate;
     return (long)(pos*1000.0);
 }
 
@@ -555,12 +555,12 @@ bool FLACDecoder::seek(long pos) {
 
 #ifdef HAVE_LIBOGGFLAC
 long OggFLACDecoder::length() {
-    float pos = m_data->length/m_data->config.sample_rate;
+    float pos = ((float)m_data->length)/m_data->config.sample_rate;
     return (long)(pos*1000.0);
 }
 
 long OggFLACDecoder::position() {
-    float pos = m_data->position/m_data->config.sample_rate;
+    float pos = ((float)m_data->position)/m_data->config.sample_rate;
     return (long)(pos*1000.0);
 }
 
