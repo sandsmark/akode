@@ -51,6 +51,10 @@ struct SurroundConfiguration {
         return *(uint8_t*)(this);
     }
 };
+// Channel ordering:
+// front(, rear)(, side)(, LFE)
+// (left, right(,)) (center)(, left-of-center, right-of-center)
+//
 // front channels:
 // 1 -> center
 // 2 -> left, right
