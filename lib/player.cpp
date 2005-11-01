@@ -55,10 +55,13 @@ struct Player::private_data
                    , volume_filter(0)
                    , sink(0)
                    , manager(0)
+                   , monitor(0)
                    , decoder_plugin(0)
                    , resampler_plugin(0)
                    , sample_rate(0)
                    , state(Closed)
+                   , my_file(false)
+                   , start_pos(0)
                    , halt(false)
                    , pause(false)
                    , detached(false)
@@ -75,6 +78,7 @@ struct Player::private_data
     VolumeFilter* volatile volume_filter;
     Sink *sink;
     Player::Manager *manager;
+    Player::Monitor *monitor;
 
     const char* decoder_plugin;
     const char* resampler_plugin;
@@ -85,6 +89,8 @@ struct Player::private_data
 
     unsigned int sample_rate;
     State state;
+    bool my_file;
+    int start_pos;
 
     volatile bool halt;
     volatile bool pause;
@@ -103,7 +109,8 @@ struct Player::private_data
         buffered_decoder.closeDecoder();
 
         delete frame_decoder;
-        delete src;
+        if (my_file)
+            delete src;
 
         frame_decoder = 0;
         src = 0;
@@ -162,6 +169,9 @@ static void* run_player(void* arg) {
 
             if (d->volume_filter)
                 d->volume_filter->doFrame(out_frame);
+
+            if (d->monitor)
+                d->monitor->writeFrame(out_frame);
 
             no_error = d->sink->writeFrame(out_frame);
 
@@ -274,10 +284,33 @@ bool Player::load(const char* filename) {
     }
     // Some of the later code expects it to be closed
     d->src->close();
+    d->my_file = true;
 
-//    d->src = new MMapFile(filename.c_str());
-//    d->src = new LocalFile(filename.c_str());
+    return load();
+}
 
+bool Player::load(File *file) {
+    if (state() == Closed) return false;
+
+    if (state() == Paused || state() == Playing)
+        stop();
+
+    if (state() == Loaded)
+        unload();
+
+    assert(state() == Open);
+
+    if (!file->openRO())
+        return false;
+    file->close();
+
+    d->src = file;
+    d->my_file = false;
+
+    return load();
+}
+
+bool Player::load() {
     if (d->decoder_plugin) {
         if (!d->decoder_handler.load(d->decoder_plugin))
             AKODE_DEBUG("Could not load " << d->decoder_plugin << "-decoder");
@@ -400,7 +433,8 @@ void Player::unload() {
     assert(state() == Loaded);
 
     delete d->frame_decoder;
-    delete d->src;
+    if (d->my_file)
+        delete d->src;
 
     d->frame_decoder = 0;
     d->src = 0;
@@ -582,6 +616,10 @@ void Player::setResamplerPlugin(const char* plugin) {
 
 void Player::setManager(Manager *manager) {
     d->manager = manager;
+}
+
+void Player::setMonitor(Monitor *monitor) {
+    d->monitor = monitor;
 }
 
 void Player::setState(Player::State state) {

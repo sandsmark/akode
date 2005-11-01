@@ -29,6 +29,8 @@ class File;
 class Sink;
 class Decoder;
 class Resampler;
+class AudioFrame;
+
 
 //! An implementation of a multithreaded aKode-player
 
@@ -58,12 +60,23 @@ public:
     void close();
 
     /*!
-     * Load the file \a filename and prepare for playing.
-     * Return false if the file cannot be loaded or decoded.
+     * Loads the file \a filename and prepares for playing.
+     * Returns false if the file cannot be loaded or decoded.
      *
      * State: \a Open -> \a Loaded
      */
     bool load(const char* filename);
+
+    /*!
+     * Loads the file \a file and prepares for playing.
+     * Returns false if the file cannot be loaded or decoded.
+     *
+     * This version allows for overloaded aKode::File objects; usefull for streaming.
+     *
+     * State: \a Open -> \a Loaded
+     */
+    bool load(File* file);
+
     /*!
      * Unload the file and release any resources allocated while loaded
      *
@@ -86,6 +99,7 @@ public:
     void stop();
     /*!
      * Waits for the file to finish playing (eof or error) and calls stop.
+     * This blocks the calling thread, possibly indefinitely if the source is a radio stream.
      *
      * State: \a Playing -> \a Loaded
      */
@@ -109,12 +123,6 @@ public:
      * State: \a Paused -> \a Playing
      */
     void resume();
-
-    /* Not implemented!
-     * Prepare to crossfade current file, it can now be safely unloaded and a new file loaded.
-     * The crossfade will last for up to \a ms milliseconds.
-     */
-    void crossfade(unsigned int ms) { /*unused arg: */ (void)ms; }
 
     /*!
      * Set the software-volume to \a v. Use a number between 0.0 and 1.0.
@@ -161,25 +169,26 @@ public:
      */
     class Manager {
         Player* m_player;
-        public:
-            /*!
-             * Called for all state changes
-             */
-            virtual void stateChangeEvent(Player::State) {};
-            /*!
-             * Called when a decoder halts because it has reached end of file.
-             * The callee should effect a Player::stop()
-             */
-            virtual void eofEvent() {};
-            /*!
-             * Called when a decoder halts because of a fatal error.
-             * The callee should effect a Player::stop()
-             */
-            virtual void errorEvent() {};
+    public:
+        /*!
+         * Called for all user-generated state changes (User thread)
+         */
+        virtual void stateChangeEvent(Player::State) {};
+        /*!
+         * Called when a decoder halts because it has reached end of file (Local thread).
+         * The callee should effect a Player::stop()
+         */
+        virtual void eofEvent() {};
+        /*!
+         * Called when a decoder halts because of a fatal error (Local thread).
+         * The callee should effect a Player::stop()
+         */
+        virtual void errorEvent() {};
     };
 
     /*!
-     * Sets an associated callback interface
+     * Sets an associated callback interface.
+     * Can only be set before open() is called.
      */
     void setManager(Manager *manager);
 
@@ -192,9 +201,26 @@ public:
      */
     void setResamplerPlugin(const char* plugin);
 
+    /*!
+     * A Monitor is sink-like device.
+     */
+    class Monitor {
+    public:
+        virtual bool writeFrame(AudioFrame* frame) = 0;
+    };
+
+    /*!
+     * Sets a secondary sink to monitor output
+     * Can only be set before play() is called.
+     */
+    void setMonitor(Monitor *monitor);
+
+
     struct private_data;
 private:
     private_data *d;
+
+    bool load();
     void setState(State state);
 };
 
