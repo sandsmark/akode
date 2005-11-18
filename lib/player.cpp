@@ -170,10 +170,10 @@ static void* run_player(void* arg) {
             if (d->volume_filter)
                 d->volume_filter->doFrame(out_frame);
 
+            no_error = d->sink->writeFrame(out_frame);
+
             if (d->monitor)
                 d->monitor->writeFrame(out_frame);
-
-            no_error = d->sink->writeFrame(out_frame);
 
             if (!no_error) {
                 // ### Check type of error

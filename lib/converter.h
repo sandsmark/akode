@@ -20,11 +20,13 @@
 #ifndef _AKODE_CONVERTER_H
 #define _AKODE_CONVERTER_H
 
+#include "akode_export.h"
+
 namespace aKode {
 
 class AudioFrame;
 
-class Converter {
+class AKODE_EXPORT Converter {
     int m_sample_width;
 public:
     Converter(int sample_width = 0);

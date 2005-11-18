@@ -206,7 +206,7 @@ public:
      */
     class Monitor {
     public:
-        virtual bool writeFrame(AudioFrame* frame) = 0;
+        virtual void writeFrame(AudioFrame* frame) = 0;
     };
 
     /*!
