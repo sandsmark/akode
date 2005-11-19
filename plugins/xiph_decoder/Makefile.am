@@ -6,8 +6,3 @@ libakode_xiph_decoder_la_SOURCES = flac_decoder.cpp speex_decoder.cpp vorbis_dec
 
 libakode_xiph_decoder_la_LDFLAGS = -module -avoid-version -no-undefined
 libakode_xiph_decoder_la_LIBADD = ../../lib/libakode.la $(LIBFLAC) $(LIBOGGFLAC) $(VORBIS_LIBS) $(VORBISFILE_LIBS) $(SPEEXLIBS)
-
-mcopclassdir = $(libdir)/mcop
-mcopclass_DATA = akodeXiphPlayObject.mcopclass \
-                 akodeVorbisStreamPlayObject.mcopclass \
-                 akodeSpeexStreamPlayObject.mcopclass

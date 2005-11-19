@@ -252,6 +252,7 @@ bool ALSASink::_writeFrame(AudioFrame* frame)
 bool ALSASink::writeFrame(AudioFrame* frame)
 {
     if (m_data->error) return false;
+    if (!frame) return false;
 
     if ( frame->sample_width != m_data->config.sample_width
       || frame->channels != m_data->config.channels
