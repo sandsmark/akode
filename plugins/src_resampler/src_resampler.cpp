@@ -95,7 +95,7 @@ static void _convert2(float *indata, AudioFrame* out)
 // A high quality resampling by using libsamplerate
 bool SRCResampler::doFrame(AudioFrame* in, AudioFrame* out)
 {
-    // Ouch, I dont like this much mallocing
+    // Ouch, I don't like this much mallocing
     float *tmp1 = new float[in->channels*in->length];
     float *tmp2 = new float[in->channels*in->length];
 

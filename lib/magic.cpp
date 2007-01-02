@@ -120,7 +120,7 @@ namespace aKode {
     }
 
     string detectSuffix(string filename) {
-        // A lot of mp3s dont start with a synchronization
+        // A lot of mp3s don't start with a synchronization
         // so use some suffix matching as well.
 
        int len = filename.length();

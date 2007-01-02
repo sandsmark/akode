@@ -68,7 +68,7 @@ public:
      */
     void* loadPlugin(const string plugin);
     /*!
-     * Returns whether the library was succesfully loaded or not
+     * Returns whether the library was successfully loaded or not
      */
     bool isLoaded() { return library_loaded; };
 protected:

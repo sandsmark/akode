@@ -149,7 +149,7 @@ int ALSASink::setAudioConfiguration(const AudioConfiguration* config)
         // Try 16bit then
         m_data->config.sample_width = 16;
     }
-    // If the driver doesnt support 8 or 16 bit, we will fail completly
+    // If the driver doesn't support 8 or 16 bit, we will fail completely
     if (m_data->config.sample_width<=8) {
         format = SND_PCM_FORMAT_S8;
         m_data->scale = 1<<(8-config->sample_width);

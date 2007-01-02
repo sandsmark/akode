@@ -42,7 +42,7 @@ public:
     AudioFrame() : length(0), max(0), data(0) {};
     ~AudioFrame() { freeSpace(); }
     /*!
-     * Reserves space in the frame for atleast \a iLength samples of the
+     * Reserves space in the frame for at least \a iLength samples of the
      * configuration \a config.
      */
     void reserveSpace(const AudioConfiguration *config, long iLength) {

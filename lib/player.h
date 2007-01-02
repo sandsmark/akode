@@ -71,7 +71,7 @@ public:
      * Loads the file \a file and prepares for playing.
      * Returns false if the file cannot be loaded or decoded.
      *
-     * This version allows for overloaded aKode::File objects; usefull for streaming.
+     * This version allows for overloaded aKode::File objects; useful for streaming.
      *
      * State: \a Open -> \a Loaded
      */

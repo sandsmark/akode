@@ -89,7 +89,7 @@ public:
     bool full();
 
     /*!
-     * Sets EOF for the incomming stream. Releases any blocking get-calls.
+     * Sets EOF for the incoming stream. Releases any blocking get-calls.
      */
     void setEOF();
     /*!
