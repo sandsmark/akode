@@ -21,6 +21,7 @@
 #include "audioframe.h"
 #include "auto_sink.h"
 
+#include <cstdlib>
 #include <iostream>
 
 namespace aKode {
