@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/akode/lib -I$(top_builddir)/akode/lib $(all_includes)
+INCLUDES = -I$(srcdir)/../../lib -I../../lib $(all_includes)
 
 lib_LTLIBRARIES	= libakode_xiph_decoder.la
 
