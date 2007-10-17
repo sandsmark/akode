@@ -58,7 +58,10 @@ bool MMapFile::openRO() {
     struct stat stat;
 
     fd = ::open(filename, O_RDONLY);
-    if (fstat(fd, &stat) < 0) return false;
+    if (fstat(fd, &stat) < 0) {
+        ::close(fd);
+        return false;
+    }
     len = stat.st_size;
     pos = 0;
 

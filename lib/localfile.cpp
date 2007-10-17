@@ -58,7 +58,10 @@ bool LocalFile::openRO() {
 
     struct stat stat;
     _fd = ::open(filename, O_RDONLY);
-    if (fstat(_fd, &stat) < 0) return false;
+    if (fstat(_fd, &stat) < 0) {
+        ::close(_fd);
+        return false;
+    }
     len = stat.st_size;
 
     m_readable = true;
@@ -74,7 +77,10 @@ bool LocalFile::openRW() {
 
     struct stat stat;
     _fd = ::open(filename, O_RDWR);
-    if (fstat(_fd, &stat) < 0) return false;
+    if (fstat(_fd, &stat) < 0) {
+        ::close(_fd);
+        return false;
+    }
     len = stat.st_size;
 
     m_readable = true;
