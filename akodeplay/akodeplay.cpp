@@ -20,6 +20,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <cstdlib>
 
 #include "../lib/akodelib.h"
 #include "../lib/player.h"
