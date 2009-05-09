@@ -9,15 +9,15 @@ set(LIB_INSTALL_DIR          "${EXEC_INSTALL_PREFIX}/lib${LIB_SUFFIX}"     CACHE
 set(INCLUDE_INSTALL_DIR      "${CMAKE_INSTALL_PREFIX}/include"             CACHE PATH "The subdirectory to the header prefix" FORCE)
 
 
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/)
+include_directories(${CMAKE_BINARY_DIR}/)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/akode-config.cmake ${CMAKE_CURRENT_BINARY_DIR}/akode-config )
 
-ADD_SUBDIRECTORY( lib ) 
-ADD_SUBDIRECTORY( plugins ) 
-ADD_SUBDIRECTORY( akodeplay ) 
+add_subdirectory( lib ) 
+add_subdirectory( plugins ) 
+add_subdirectory( akodeplay ) 
 
 
 ########### install files ###############
 
-INSTALL( FILES  akode-config DESTINATION ${BIN_INSTALL_DIR})
+install( FILES  akode-config DESTINATION ${BIN_INSTALL_DIR})
