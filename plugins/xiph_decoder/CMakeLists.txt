@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/akode/lib  )
+INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/lib  ${CMAKE_BINARY_DIR}/lib )
 
 
 ########### next target ###############
@@ -9,8 +9,6 @@ speex_decoder.cpp
 vorbis_decoder.cpp
 xiph_decoder.cpp
 )
-
-KDE3_AUTOMOC(${akode_xiph_decoder_LIB_SRCS})
 
 ADD_LIBRARY(akode_xiph_decoder SHARED ${akode_xiph_decoder_LIB_SRCS})
 

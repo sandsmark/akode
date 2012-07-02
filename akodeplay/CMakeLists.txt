@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/akode/lib  )
+INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/akode/lib ${CMAKE_BINARY_DIR}/lib )
 
 
 ########### next target ###############
@@ -9,6 +9,6 @@ akodeplay.cpp
 
 ADD_EXECUTABLE(akodeplay ${akodeplay_SRCS})
 
-TARGET_LINK_LIBRARIES(akodeplay akode )
+TARGET_LINK_LIBRARIES(akodeplay akode pthread dl )
 
-INSTALL(PROGRAMS akodeplay DESTINATION ${BIN_INSTALL_DIR})
+INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/akodeplay DESTINATION ${BIN_INSTALL_DIR})

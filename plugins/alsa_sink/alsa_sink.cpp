@@ -23,7 +23,7 @@
 #include <alsa/asoundlib.h>
 #include <alsa/pcm.h>
 
-#include <audioframe.h>
+#include "audioframe.h"
 #include "alsa_sink.h"
 
 /*

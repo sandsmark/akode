@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 2.8)
 project(akode)
 
 set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
@@ -20,4 +21,4 @@ add_subdirectory( akodeplay )
 
 ########### install files ###############
 
-install( FILES  akode-config DESTINATION ${BIN_INSTALL_DIR})
+install( FILES  ${CMAKE_CURRENT_BINARY_DIR}/akode-config DESTINATION ${BIN_INSTALL_DIR})

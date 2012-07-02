@@ -22,6 +22,7 @@
 #include "magic.h"
 #include "file.h"
 #include <iostream>
+#include <string.h>
 using std::cerr;
 
 namespace aKode {

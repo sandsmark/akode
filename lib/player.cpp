@@ -19,6 +19,7 @@
 */
 
 #include <pthread.h>
+#include <string.h>
 #include <semaphore.h>
 #include <assert.h>
 

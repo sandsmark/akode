@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/akode/lib  )
+INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/lib  ${CMAKE_BINARY_DIR}/lib )
 
 
 ########### next target ###############
@@ -6,8 +6,6 @@ INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/akode/lib  )
 SET(akode_ffmpeg_decoder_LIB_SRCS
 ffmpeg_decoder.cpp
 )
-
-KDE3_AUTOMOC(${akode_ffmpeg_decoder_LIB_SRCS})
 
 ADD_LIBRARY(akode_ffmpeg_decoder SHARED ${akode_ffmpeg_decoder_LIB_SRCS})
 
