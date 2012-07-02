@@ -171,44 +171,34 @@ int ALSASink::setAudioConfiguration(const AudioConfiguration* config)
         goto found_format;
     }
 
+
 found_format:
     if (format != SND_PCM_FORMAT_UNKNOWN)
         snd_pcm_hw_params_set_format(m_data->pcm_playback, hw, format);
     else {
-        std::cerr << "SND_PCM_FORMAT_UNKNOWN\n";
         return -1;
     }
-    std::cout << "FORMAT: " << format << "\n";
 
     unsigned int rate = config->sample_rate;
-    std::cout << "rate: " << rate < "\n";
     snd_pcm_hw_params_set_rate_near(m_data->pcm_playback, hw, &rate, 0);
     if (m_data->config.sample_rate != rate) {
         m_data->config.sample_rate = rate;
         res = 1;
     }
-    std::cout << "rate: " << rate << "\n";
-
-    snd_pcm_hw_params_set_channels(m_data->pcm_playback, hw, config->channels);
-    std::cout << "channels: " << config->channels << "\n";
-
 
     m_data->fragmentSize = 1024;
     snd_pcm_uframes_t period_size = m_data->fragmentSize / (wid*config->channels);
-    std::cout << "period size: " << period_size < "\n";
     snd_pcm_hw_params_set_period_size_near(m_data->pcm_playback, hw, &period_size, 0);
 
-    std::cout << "period size: " << period_size < "\n";
-
     m_data->fragmentSize = period_size * (wid*config->channels);
-//     std::cerr << "akode: ALSA fragment-size: " << m_data->fragmentSize << "\n";
 
     delete m_data->buffer;
     m_data->buffer = new char [m_data->fragmentSize];
     m_data->filled = 0;
 
     int err;
-    if (err = snd_pcm_hw_params(m_data->pcm_playback, hw)) {
+    err = snd_pcm_set_params(m_data->pcm_playback, format, SND_PCM_ACCESS_RW_INTERLEAVED, config->channels, config->sample_rate, 1, 0);
+    if (err) {
         std::cerr << "unable to set hw parameters: " << snd_strerror(err) << "\n";
         return -1;
     }
