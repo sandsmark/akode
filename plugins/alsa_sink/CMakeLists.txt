@@ -1,6 +1,3 @@
-INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/lib ${CMAKE_BINARY_DIR}/lib  )
-
-
 ########### next target ###############
 
 SET(akode_alsa_sink_LIB_SRCS

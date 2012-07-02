@@ -2,9 +2,13 @@ if(HAVE_SYS_AUDIOIO_H)
 	ADD_SUBDIRECTORY(sun_sink)
 endif(HAVE_SYS_AUDIOIO_H)
 
+INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/lib  ${CMAKE_BINARY_DIR}/lib )
+
 add_subdirectory(alsa_sink)
 add_subdirectory(xiph_decoder)
 add_subdirectory(ffmpeg_decoder)
+add_subdirectory(mpeg_decoder)
+add_subdirectory(oss_sink)
 #MESSAGE(STATUS "${CMAKE_CURRENT_SOURCE_DIR}: skipped subdir $(AKODE_MPC_DECODER)")
 #MESSAGE(STATUS "${CMAKE_CURRENT_SOURCE_DIR}: skipped subdir $(AKODE_XIPH_DECODER)")
 #MESSAGE(STATUS "${CMAKE_CURRENT_SOURCE_DIR}: skipped subdir $(AKODE_MPEG_DECODER)")

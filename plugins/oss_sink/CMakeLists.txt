@@ -1,4 +1,3 @@
-INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/akode/lib  )
 
 
 ########### next target ###############
@@ -6,8 +5,6 @@ INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/akode/lib  )
 SET(akode_oss_sink_LIB_SRCS
 oss_sink.cpp
 )
-
-KDE3_AUTOMOC(${akode_oss_sink_LIB_SRCS})
 
 ADD_LIBRARY(akode_oss_sink SHARED ${akode_oss_sink_LIB_SRCS})
 

@@ -75,6 +75,7 @@ bool ALSASink::open()
     // open is non-blocking to make it possible to fail when occupied
     err = snd_pcm_open(&m_data->pcm_playback, "default", SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
     if (err < 0) {
+        std::cerr << "Failed to load ALSA plugin: " << strerror(err) << std::endl;
         m_data->error = true;
         return false;
     }
@@ -98,13 +99,19 @@ void ALSASink::close()
 
 int ALSASink::setAudioConfiguration(const AudioConfiguration* config)
 {
-    if (m_data->error) return -1;
+    if (m_data->error) {
+        std::cerr << "Data has error\n";
+        return -1;
+    }
 
     // Get back to OPEN state (is SETUP state enough with snd_pcm_drop?)
     snd_pcm_state_t state = snd_pcm_state( m_data->pcm_playback );
     if (state != SND_PCM_STATE_OPEN) {
         close();
-        if (!open()) return -1;
+        if (!open()) {
+            std::cerr << "Unable to open\n";
+            return -1;
+        }
     }
 
     int res = 0;
@@ -167,22 +174,31 @@ int ALSASink::setAudioConfiguration(const AudioConfiguration* config)
 found_format:
     if (format != SND_PCM_FORMAT_UNKNOWN)
         snd_pcm_hw_params_set_format(m_data->pcm_playback, hw, format);
-    else
+    else {
+        std::cerr << "SND_PCM_FORMAT_UNKNOWN\n";
         return -1;
+    }
+    std::cout << "FORMAT: " << format << "\n";
 
     unsigned int rate = config->sample_rate;
+    std::cout << "rate: " << rate < "\n";
     snd_pcm_hw_params_set_rate_near(m_data->pcm_playback, hw, &rate, 0);
     if (m_data->config.sample_rate != rate) {
         m_data->config.sample_rate = rate;
         res = 1;
     }
+    std::cout << "rate: " << rate << "\n";
 
     snd_pcm_hw_params_set_channels(m_data->pcm_playback, hw, config->channels);
+    std::cout << "channels: " << config->channels << "\n";
 
 
     m_data->fragmentSize = 1024;
     snd_pcm_uframes_t period_size = m_data->fragmentSize / (wid*config->channels);
+    std::cout << "period size: " << period_size < "\n";
     snd_pcm_hw_params_set_period_size_near(m_data->pcm_playback, hw, &period_size, 0);
+
+    std::cout << "period size: " << period_size < "\n";
 
     m_data->fragmentSize = period_size * (wid*config->channels);
 //     std::cerr << "akode: ALSA fragment-size: " << m_data->fragmentSize << "\n";
@@ -191,7 +207,9 @@ found_format:
     m_data->buffer = new char [m_data->fragmentSize];
     m_data->filled = 0;
 
-    if (snd_pcm_hw_params(m_data->pcm_playback, hw) < 0) {
+    int err;
+    if (err = snd_pcm_hw_params(m_data->pcm_playback, hw)) {
+        std::cerr << "unable to set hw parameters: " << snd_strerror(err) << "\n";
         return -1;
     }
     else {

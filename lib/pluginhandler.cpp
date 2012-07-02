@@ -107,6 +107,7 @@ bool PluginHandler::load(const string lib)
     }
   #endif
     if (!handle) {
+        std::cerr << "Unable to load plugin: " << dlerror() << "\n";
         return false;
     }
 
@@ -128,7 +129,12 @@ void* PluginHandler::loadPlugin(const string name) {
 
     DLERROR(); // clear errors
     plugin = DLSYM(handle, name.c_str());
-    if (DLERROR()) return 0;
+    char *err = dlerror();
+    if (err) {
+        std::cerr << "dlerror while opening '" << name << "': '" << err << "'\n";
+        return 0;
+    }
+    //if (dlerror()) return 0;
 
     return plugin;
 }

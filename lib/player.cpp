@@ -332,6 +332,7 @@ bool Player::load() {
     }
 
     if (!d->decoder_handler.isLoaded()) {
+        AKODE_DEBUG("Decoder is not loaded!");
         delete d->src;
         d->src = 0;
         return false;

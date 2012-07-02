@@ -9,6 +9,6 @@ akodeplay.cpp
 
 ADD_EXECUTABLE(akodeplay ${akodeplay_SRCS})
 
-TARGET_LINK_LIBRARIES(akodeplay akode pthread dl )
+TARGET_LINK_LIBRARIES(akodeplay akode pthread dl asound )
 
 INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/akodeplay DESTINATION ${BIN_INSTALL_DIR})

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(akode)
 
+find_package(ALSA)
+
 set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
 set(EXEC_INSTALL_PREFIX  ${CMAKE_INSTALL_PREFIX}       CACHE PATH  "Base directory for executables and libraries" FORCE)
 #

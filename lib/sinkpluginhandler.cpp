@@ -17,6 +17,7 @@
     the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
     Boston, MA 02110-1301, USA.
 */
+#include <iostream>
 
 #include "akodelib.h"
 #include "sink.h"
@@ -54,10 +55,12 @@ bool SinkPluginHandler::load(const string name)
         if (name == "auto")
             sink_plugin = &auto_sink;
         else
-        if (name == "void")
+        if (name == "void") {
             sink_plugin = &void_sink;
-        else
+        } else {
+            std::cerr << "Plugin not found\n";
             return false; // plugin not found
+        }
 
     return res;
 }
